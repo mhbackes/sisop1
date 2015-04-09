@@ -8,6 +8,7 @@
 #define __mdata__
 
 #include <stdlib.h>
+#include <ucontext.h>
 
 /* NÃO ALTERAR ESSA struct */
 typedef struct TCB { 
