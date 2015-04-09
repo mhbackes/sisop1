@@ -19,7 +19,7 @@ void enqueue(TCB_t** head, TCB_t** tail, TCB_t* tcb) {
 	} else {
 		(*tail)->next = tcb;
 		tcb->prev = *tail;
-		TCB->next = NULL;
+		tcb->next = NULL;
 		*tail = tcb;
 	}
 }
@@ -27,7 +27,7 @@ void enqueue(TCB_t** head, TCB_t** tail, TCB_t* tcb) {
 TCB_t* dequeue(TCB_t** head, TCB_t** tail){
 	if (!*head)
 		return NULL;
-	TCB* ret = *head;
+	TCB_t* ret = *head;
 	*head = (*head)->next;
 	if(!*head)
 		*tail = NULL;
