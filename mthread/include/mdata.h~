@@ -7,7 +7,7 @@
 #ifndef __mdata__
 #define __mdata__
 
-#inlcude <stdlib.h>
+#include <stdlib.h>
 
 /* NÃO ALTERAR ESSA struct */
 typedef struct TCB { 
