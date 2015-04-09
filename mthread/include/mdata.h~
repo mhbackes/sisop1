@@ -22,8 +22,8 @@ typedef struct TCB {
 
 enum state { CREATION, READY, EXECUTING, BLOCKED, TERMINATED };
 
-TCB_t* ready_head[3] = {NULL, NULL, NULL};
-TCB_t* ready_tail[3] = {NULL, NULL, NULL};
+TCB_t* ready_head[3] = { NULL, NULL, NULL };
+TCB_t* ready_tail[3] = { NULL, NULL, NULL };
 TCB_t* blocked_head = NULL;
 TCB_t* blocked_tail = NULL;
 TCB_t* exe_head = NULL;
@@ -34,4 +34,5 @@ int last_tid = 0;
 void enqueue(TCB_t** head, TCB_t** tail, TCB_t* tcb);
 TCB_t* dequeue(TCB_t** head, TCB_t** tail);
 
+void schedule();
 #endif
