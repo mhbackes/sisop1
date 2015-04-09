@@ -34,4 +34,5 @@ BOOL sched_init;
 void enqueue(TCB_t** head, TCB_t** tail, TCB_t* tcb);
 TCB_t* dequeue(TCB_t** head, TCB_t** tail);
 
+void schedule();
 #endif
