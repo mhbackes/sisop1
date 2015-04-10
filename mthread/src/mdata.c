@@ -1,4 +1,4 @@
-#include "mdata.h"
+#include "../include/mdata.h"
 
 // Exemplo:
 // 1, 2, 3, 4
@@ -36,12 +36,11 @@ TCB_t* dequeue(TCB_t** head, TCB_t** tail){
 	return ret;
 }
 
-TCB_t* thread_init(int tid, int state, int prio, ucontext_t context, TCB_t *prev, TCB_t *next) {
+TCB_t* thread_init(int tid, int state, int prio, TCB_t *prev, TCB_t *next) {
 	TCB_t* new_thread = (TCB_t*) malloc(sizeof(TCB_t));
 	new_thread->tid = tid;
 	new_thread->state = state;
 	new_thread->prio = prio;
-	new_thread->context = context;
 	new_thread->prev = prev;
 	new_thread->next = next;
 
@@ -52,7 +51,7 @@ void schedule() {
 	int i;
 
 	for (i = 0; i < 3; i++) {
-		if (ready_head[i] != NULL) {
+		if (_ready_head[i] != NULL) {
 			TCB_t* tcb = dequeue(&_ready_head[i], &_ready_tail[i]);
 			enqueue(&_exe_head, &_exe_tail, tcb);
 			setcontext(&(tcb->context));

@@ -4,6 +4,8 @@
 
 CC=gcc
 LIB_DIR=../lib
+SRC_DIR=../src
+INC_DIR=../include
 
 all: exemplo mandel teste_vetor teste_prio
 
