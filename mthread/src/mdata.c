@@ -69,7 +69,7 @@ TCB_t* thread_init(int tid, int state, int prio, void *(*start)(void*), void* ar
 	new_thread->prev = NULL;
 	new_thread->next = NULL;
 	getcontext(&(new_thread->context));
-	new_thread->context.uc_link = NULL;
+	new_thread->context.uc_link = &_sched_context; // toda thread retorna para o contexto do escalonador quando termina
 	new_thread->context.uc_stack.ss_sp = malloc(SIGSTKSZ);
 	new_thread->context.uc_stack.ss_size = SIGSTKSZ;
 	makecontext(&(new_thread->context), (void (*)(void))start, 1, arg);

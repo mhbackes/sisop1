@@ -25,10 +25,13 @@ libmthread.a: mthread.o mdata.o
 	ar crs $(LIB_DIR)/libmthread.a mthread.o mdata.o
 
 mthread.o: $(SRC_DIR)/mthread.c
-	$(CC) -c $(SRC_DIR)/mthread.c
+	$(CC) -g -c $(SRC_DIR)/mthread.c
 
 mdata.o: $(SRC_DIR)/mdata.c
-	$(CC) -c $(SRC_DIR)/mdata.c
+	$(CC) -g -c $(SRC_DIR)/mdata.c
+
+debug: mthread.o mdata.o
+	$(CC) -g -o exemplo exemplo.c mthread.o mdata.o
 
 clean:
 	rm -rf exemplo mandel teste_vetor teste_prio *~ *.o
