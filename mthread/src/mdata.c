@@ -41,7 +41,7 @@ void init() {
 	getcontext(&(main_thread->context));
 	if (_next_tid == 0) {
 		_next_tid++;
-		enqueue(&_ready_head, &_ready_tail, main_thread);
+		enqueue(&_ready_head[HIGH], &_ready_tail[HIGH], main_thread);
 		getcontext(&_sched_context);
 		_sched_context.uc_link = NULL;
 		_sched_context.uc_stack.ss_sp = _sched_stack;
@@ -61,7 +61,7 @@ TCB_t* main_thread_init(){
 	return main_thread;
 }
 
-TCB_t* thread_init(int tid, int state, int prio, void (*start)(void), void* arg) {
+TCB_t* thread_init(int tid, int state, int prio, void *(*start)(void*), void* arg) {
 	TCB_t* new_thread = (TCB_t*) malloc(sizeof(TCB_t));
 	new_thread->tid = tid;
 	new_thread->state = state;
@@ -72,7 +72,7 @@ TCB_t* thread_init(int tid, int state, int prio, void (*start)(void), void* arg)
 	new_thread->context.uc_link = NULL;
 	new_thread->context.uc_stack.ss_sp = malloc(SIGSTKSZ);
 	new_thread->context.uc_stack.ss_size = SIGSTKSZ;
-	makecontext(&(new_thread->context), start, 1, arg);
+	makecontext(&(new_thread->context), (void (*)(void))start, 1, arg);
 	return new_thread;
 }
 
