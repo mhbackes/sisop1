@@ -42,7 +42,7 @@ int _next_tid;
 void enqueue(TCB_t** head, TCB_t** tail, TCB_t* tcb);
 TCB_t* dequeue(TCB_t** head, TCB_t** tail);
 
-TCB_t* thread_init(int tid, int state, int prio, void (*start)(void), void* arg);
+TCB_t* thread_init(int tid, int state, int prio, void *(*start)(void*), void* arg);
 TCB_t* main_thread_init();
 
 void init();
