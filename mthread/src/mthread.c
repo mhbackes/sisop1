@@ -18,11 +18,10 @@ int myield() {
 	if (yielded == 0) { 
 		yielded = 1;	// evita que a thread execute esse código quando voltar
 		int prio = _run_head->prio;
-		enqueue(&_ready_head[prio], &_ready_tail[prio], _run_head);
+		TCB_t *yielded_thread = dequeue(&_run_head, &_run_tail);
+		yielded_thread->state = READY;
+		enqueue(&_ready_head[prio], &_ready_tail[prio], yielded_thread);
 		setcontext(&_sched_context); // chaveia para o escalonador
 	}
 }
 
-int mwait(int tid) {
-	
-}
