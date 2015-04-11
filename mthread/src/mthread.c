@@ -13,7 +13,7 @@ int mcreate(int prio, void *(*start)(void*), void *arg) {
 
 int myield() {
 	int yielded = 0;
-	getcontext(&(_run_head->context));
+	int ret = getcontext(&(_run_head->context));
 	
 	if (yielded == 0) { 
 		yielded = 1;	// evita que a thread execute esse código quando voltar
@@ -23,5 +23,6 @@ int myield() {
 		enqueue(&_ready_head[prio], &_ready_tail[prio], yielded_thread);
 		setcontext(&_sched_context); // chaveia para o escalonador
 	}
+	return ret; // caso ocorra algum erro em getcontext, retorna -1, senão, retorna 0
 }
 
