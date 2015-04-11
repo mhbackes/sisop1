@@ -10,3 +10,19 @@ int mcreate(int prio, void *(*start)(void*), void *arg) {
 	new_thread->state = READY;
 	return new_thread->tid;
 }
+
+int myield() {
+	int yielded = 0;
+	getcontext(&(_run_head->context));
+	
+	if (yielded == 0) { 
+		yielded = 1;	// evita que a thread execute esse código quando voltar
+		int prio = _run_head->prio;
+		enqueue(&_ready_head[prio], &_ready_tail[prio], _run_head);
+		setcontext(&_sched_context); // chaveia para o escalonador
+	}
+}
+
+int mwait(int tid) {
+	
+}
