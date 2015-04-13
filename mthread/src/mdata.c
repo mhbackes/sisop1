@@ -76,6 +76,13 @@ TCB_t* thread_init(int tid, int state, int prio, void *(*start)(void*), void* ar
 	return new_thread;
 }
 
+void thread_end(){ //FUNÇÃO ARNOLD SCHWARZENEGGER
+	TCB* tcb = dequeue(&_run_head, &_run_tail);
+	tcb->status = TERMINATED;
+	free(tcb->context.uc_stack.ss_sp);
+	free(tcb);
+}
+
 void schedule() {
 	int i;
 
