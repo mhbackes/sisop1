@@ -42,6 +42,11 @@ void init() {
 	if (_next_tid == 0) {
 		_next_tid++;
 		enqueue(&_ready_head[HIGH], &_ready_tail[HIGH], main_thread);
+		getcontext(&_terminate_context);
+		_sched_context.uc_link = &_sched_context;
+		_sched_context.uc_stack.ss_sp = _terminate_stack;
+		_sched_context.uc_stack.ss_size = sizeof(_terminate_stack);
+		makecontext(&_terminate_context, (void (*)(void)) thread_end, 0);
 		getcontext(&_sched_context);
 		_sched_context.uc_link = NULL;
 		_sched_context.uc_stack.ss_sp = _sched_stack;
@@ -69,7 +74,7 @@ TCB_t* thread_init(int tid, int state, int prio, void *(*start)(void*), void* ar
 	new_thread->prev = NULL;
 	new_thread->next = NULL;
 	getcontext(&(new_thread->context));
-	new_thread->context.uc_link = &_sched_context; // toda thread retorna para o contexto do escalonador quando termina
+	new_thread->context.uc_link = &_terminate_context; // toda thread retorna para o contexto do escalonador quando termina
 	new_thread->context.uc_stack.ss_sp = malloc(SIGSTKSZ);
 	new_thread->context.uc_stack.ss_size = SIGSTKSZ;
 	makecontext(&(new_thread->context), (void (*)(void))start, 1, arg);
@@ -77,8 +82,8 @@ TCB_t* thread_init(int tid, int state, int prio, void *(*start)(void*), void* ar
 }
 
 void thread_end(){ //FUNÇÃO ARNOLD SCHWARZENEGGER
-	TCB* tcb = dequeue(&_run_head, &_run_tail);
-	tcb->status = TERMINATED;
+	TCB_t* tcb = dequeue(&_run_head, &_run_tail);
+	tcb->state = TERMINATED;
 	free(tcb->context.uc_stack.ss_sp);
 	free(tcb);
 }

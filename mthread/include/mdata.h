@@ -35,6 +35,9 @@ TCB_t* _run_tail;
 ucontext_t _sched_context;
 char _sched_stack[SIGSTKSZ];
 
+ucontext_t _terminate_context;
+char _terminate_stack[SIGSTKSZ];
+
 int _next_tid;
 
 // fun��es:
@@ -48,4 +51,5 @@ TCB_t* main_thread_init();
 
 void init();
 void schedule();
+
 #endif
