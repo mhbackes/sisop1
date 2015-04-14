@@ -25,3 +25,15 @@ int myield() {
 	}
 	return ret; // caso ocorra algum erro em getcontext, retorna -1, senão, retorna 0
 }
+
+int mmutex_init(mmutex_t *mtx) {
+	mtx = (mmutex_t*) malloc(sizeof(mmutex_t));
+	if (!mtx) {
+		return -1;
+	} else {
+		mtx->flag = 0;
+		mtx->first = NULL;
+		mtx->last = NULL;
+	}
+	return 0;
+}
