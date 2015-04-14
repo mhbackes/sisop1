@@ -37,3 +37,19 @@ int mmutex_init(mmutex_t *mtx) {
 	}
 	return 0;
 }
+
+int mlock(mmutex_t *mtx) {
+	if (mtx) {
+		if (mtx->flag) {
+			_run_head->state = BLOCKED;
+			TCB_t* tcb = dequeue(&_run_head, &_run_tail);
+			enqueue(&(mtx->first), &(mtx->last), tcb);
+			swapcontext(&(tcb->context), &_sched_context);
+		} else {
+			mtx->flag = 1;
+		}
+		return 0;
+	} else {
+		return -1;
+	}
+}
