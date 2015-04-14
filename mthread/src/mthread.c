@@ -38,6 +38,15 @@ int mmutex_init(mmutex_t *mtx) {
 	return 0;
 }
 
+int mwait(int tid){
+	TCB_t* tcb = dequeue(&_run_head, &_run_tail);
+	if(find_blocked_thread(tid))
+		return -1;
+	insert_blocked_thread(tid, tcb);
+	tcb->state = BLOCKED;
+	return swapcontext(&(tcb->context), &_sched_context);
+}
+
 int mlock(mmutex_t *mtx) {
 	if (mtx) {
 		if (mtx->flag) {
