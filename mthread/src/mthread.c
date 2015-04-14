@@ -25,8 +25,3 @@ int myield() {
 	}
 	return ret; // caso ocorra algum erro em getcontext, retorna -1, senão, retorna 0
 }
-
-int mwait(int tid)  {
-
-
-}

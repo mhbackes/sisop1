@@ -100,3 +100,54 @@ void schedule() {
 		}
 	}
 }
+
+TCB_t* find_blocked_thread(int tid) {
+	BLOCKED_TCB_t* b_tcb = _blocked_head;
+	
+	while (b_tcb) {
+		if (b_tcb->waited_tid == tid) {
+			return b_tcb->waiting_tcb;
+		}
+		b_tcb = b_tcb->next;
+	}
+	
+	return NULL;	// caso não encontrar
+}
+
+void insert_blocked_thread(int tid, TCB_t* tcb) {
+	BLOCKED_TCB_t* b_tcb = (BLOCKED_TCB_t*) malloc(sizeof(BLOCKED_TCB_t));
+	b_tcb->waiting_tcb = tcb;
+	b_tcb->waited_tid = tid;
+	b_tcb->next = _blocked_head;
+	_blocked_head = b_tcb;
+}
+
+TCB_t* remove_blocked_thread(int tid) {
+	BLOCKED_TCB_t* b_tcb = _blocked_head;
+	BLOCKED_TCB_t* rem = NULL;
+	TCB_t* tcb;
+	
+	if (!b_tcb) {
+		return NULL;
+	}
+	
+	if (b_tcb->waited_tid == tid) {
+		tcb = b_tcb->waiting_tcb;
+		_blocked_head = _blocked_head->next;
+		free(b_tcb);
+		return tcb;
+	}
+	
+	while (b_tcb->next) {
+		if (b_tcb->next->waited_tid == tid) {
+			tcb = b_tcb->next->waiting_tcb;
+			rem = b_tcb->next;
+			b_tcb->next = rem->next;
+			free(rem);
+			return tcb;
+		}
+		b_tcb = b_tcb->next;
+	}
+	
+	return NULL;	// caso não encontrar
+}

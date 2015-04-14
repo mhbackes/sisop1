@@ -21,14 +21,19 @@ typedef struct TCB {
 	struct TCB *next;		// ponteiro para o pr�ximo TCB da lista
 } TCB_t;
 
+typedef struct BLOCKED_TCB {
+	int waited_tid;
+	TCB_t* waiting_tcb;
+	struct BLOCKED_TCB *next;
+} BLOCKED_TCB_t;
+
 enum state { CREATION = 0, READY, RUNNING, BLOCKED, TERMINATED };
 
 enum priority {	HIGH = 0, MEDIUM, LOW };
 
 TCB_t* _ready_head[3];
 TCB_t* _ready_tail[3];
-TCB_t* _blocked_head;
-TCB_t* _blocked_tail;
+BLOCKED_TCB_t* _blocked_head;
 TCB_t* _run_head;
 TCB_t* _run_tail;
 
@@ -41,6 +46,10 @@ char _terminate_stack[SIGSTKSZ];
 int _next_tid;
 
 // fun��es:
+
+TCB_t* find_blocked_thread(int tid);
+TCB_t* remove_blocked_thread(int tid);
+void insert_blocked_thread(int tid, TCB_t* tcb);
 
 void enqueue(TCB_t** head, TCB_t** tail, TCB_t* tcb);
 TCB_t* dequeue(TCB_t** head, TCB_t** tail);
