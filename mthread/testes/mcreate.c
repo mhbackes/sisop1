@@ -10,19 +10,28 @@
 #include "../include/mthread.h"
 #include "../include/mdata.h"
 
-void print_thread(){
-	printf("Olá, sou uma thread!");
+void print_thread_wait(int* i){
+	printf("Olá, sou a thread %d! Agora vou aguardar pela thread %d.\n", i[0], i[1]);
+	mwait(i[1]);
+	printf("Olá, sou a thread %d! Agora que a thread %d terminou, posso terminar.\n", i[0], i[1]);
+}
+
+void print_thread_yield(int* i){
+	printf("Olá, sou a thread %d! Agora vou yeldar.\n", i[0]);
+	myield();
+	printf("Olá, sou a thread %d! Agora que já yieldei, posso terminar.\n", i[0]);
 }
 
 int main() {
-	TCB_t* teste1 = thread_init(0, 1, 1, &print_thread, NULL);
-	TCB_t* teste2 = thread_init(2, 1, 1, &print_thread, NULL);
-	TCB_t* teste3 = thread_init(3, 1, 1, &print_thread, NULL);
-	TCB_t* teste4 = thread_init(4, 1, 1, &print_thread, NULL);
-	insert_blocked_thread(0, teste2);
-	insert_blocked_thread(3, teste4);
-	insert_blocked_thread(4, teste3);
-	insert_blocked_thread(2, teste1);
+	int i[] = {1};
+	int j[] = {2, 1};
+	int k[] = {3};
+	mcreate(0, (void *(*)(void*)) &print_thread_yield, i);
+	mcreate(0, (void *(*)(void*)) &print_thread_wait, j);
+	mcreate(0, (void *(*)(void*)) &print_thread_yield, k);
+	printf("Olá, sou a thread main, sou mais legal! Agora vou aguardar pela thread 2.\n");
+	mwait(2);
+	printf("Olá, sou a thread main, sou mais legal! Agora que as outras threads plebéias já acabaram, um abraço.");
 	
 	return 0;
 }
