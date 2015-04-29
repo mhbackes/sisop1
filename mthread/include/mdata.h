@@ -27,9 +27,11 @@ typedef struct BLOCKED_TCB {
 	struct BLOCKED_TCB *next;
 } BLOCKED_TCB_t;
 
-enum state { CREATION = 0, READY, RUNNING, BLOCKED, TERMINATED };
+enum tcb_state { CREATION = 0, READY, RUNNING, BLOCKED, TERMINATED };
 
-enum priority {	HIGH = 0, MEDIUM, LOW };
+enum tcb_priority {	HIGH = 0, MEDIUM, LOW };
+
+enum mutex_state { UNLOCKED = 0, LOCKED };
 
 TCB_t* _ready_head[3];
 TCB_t* _ready_tail[3];

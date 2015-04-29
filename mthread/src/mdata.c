@@ -86,7 +86,7 @@ void thread_end(){ //FUNÇÃO ARNOLD SCHWARZENEGGER
 	tcb->state = TERMINATED;
 	TCB_t* waiting_tcb = remove_blocked_thread(tcb->tid);
 	if(waiting_tcb){
-		enqueue(&_ready_head, &_ready_tail, waiting_tcb);
+		enqueue(&(_ready_head[waiting_tcb->prio]), &(_ready_tail[waiting_tcb->prio]), waiting_tcb);
 		waiting_tcb->state = READY;
 	}
 	free(tcb->context.uc_stack.ss_sp);

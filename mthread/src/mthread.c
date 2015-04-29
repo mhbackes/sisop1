@@ -28,13 +28,12 @@ int myield() {
 
 int mmutex_init(mmutex_t *mtx) {
 	mtx = (mmutex_t*) malloc(sizeof(mmutex_t));
-	if (!mtx) {
+	if (!mtx)
 		return -1;
-	} else {
-		mtx->flag = 0;
-		mtx->first = NULL;
-		mtx->last = NULL;
-	}
+	mtx->flag = 0;
+	mtx->first = NULL;
+	mtx->last = NULL;
+
 	return 0;
 }
 
@@ -48,17 +47,26 @@ int mwait(int tid){
 }
 
 int mlock(mmutex_t *mtx) {
-	if (mtx) {
-		if (mtx->flag) {
-			_run_head->state = BLOCKED;
-			TCB_t* tcb = dequeue(&_run_head, &_run_tail);
-			enqueue(&(mtx->first), &(mtx->last), tcb);
-			swapcontext(&(tcb->context), &_sched_context);
-		} else {
-			mtx->flag = 1;
-		}
-		return 0;
-	} else {
+	if (!mtx) 
 		return -1;
+	if (mtx->flag) {
+		_run_head->state = BLOCKED;
+		TCB_t* tcb = dequeue(&_run_head, &_run_tail);
+		enqueue(&(mtx->first), &(mtx->last), tcb);
+		swapcontext(&(tcb->context), &_sched_context);
+	} else {
+		mtx->flag = LOCKED;
 	}
+	return 0;
+}
+
+int munlock(mmutex_t *mtx) {
+	if (!mtx)
+		return -1;
+	TCB_t* tcb = dequeue(&(mtx->first), &(mtx->last));
+	enqueue(&_ready_head[tcb->prio], &_ready_tail[tcb->prio], tcb);
+	if (mtx->first == NULL) {
+		mtx->flag = UNLOCKED;
+	}
+	return 0;
 }
