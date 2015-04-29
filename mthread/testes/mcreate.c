@@ -31,7 +31,7 @@ int main() {
 	mcreate(0, (void *(*)(void*)) &print_thread_yield, k);
 	printf("Olá, sou a thread main, sou mais legal! Agora vou aguardar pela thread 2.\n");
 	mwait(2);
-	printf("Olá, sou a thread main, sou mais legal! Agora que as outras threads plebéias já acabaram, um abraço.");
-	
+	printf("Olá, sou a thread main, sou mais legal! Agora que as outras threads plebéias já acabaram, um abraço.\n");
+
 	return 0;
 }
