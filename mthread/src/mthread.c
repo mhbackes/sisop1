@@ -14,8 +14,8 @@ int mcreate(int prio, void *(*start)(void*), void *arg) {
 int myield() {
 	int yielded = 0;
 	int ret = getcontext(&(_run_head->context));
-	
-	if (yielded == 0) { 
+
+	if (yielded == 0) {
 		yielded = 1;	// evita que a thread execute esse código quando voltar
 		int prio = _run_head->prio;
 		TCB_t *yielded_thread = dequeue(&_run_head, &_run_tail);
@@ -37,9 +37,9 @@ int mmutex_init(mmutex_t *mtx) {
 	return 0;
 }
 
-int mwait(int tid){
+int mwait(int tid) {
 	TCB_t* tcb = dequeue(&_run_head, &_run_tail);
-	if(find_blocked_thread(tid))
+	if (find_blocked_thread(tid))
 		return -1;
 	insert_blocked_thread(tid, tcb);
 	tcb->state = BLOCKED;
@@ -47,7 +47,7 @@ int mwait(int tid){
 }
 
 int mlock(mmutex_t *mtx) {
-	if (!mtx) 
+	if (!mtx)
 		return -1;
 	if (mtx->flag) {
 		_run_head->state = BLOCKED;
@@ -64,8 +64,9 @@ int munlock(mmutex_t *mtx) {
 	if (!mtx)
 		return -1;
 	TCB_t* tcb = dequeue(&(mtx->first), &(mtx->last));
-	enqueue(&_ready_head[tcb->prio], &_ready_tail[tcb->prio], tcb);
-	if (mtx->first == NULL) {
+	if (tcb) {
+		enqueue(&_ready_head[tcb->prio], &_ready_tail[tcb->prio], tcb);
+	} else {
 		mtx->flag = UNLOCKED;
 	}
 	return 0;
