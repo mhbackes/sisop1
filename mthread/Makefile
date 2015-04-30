@@ -10,23 +10,24 @@
 # 
 
 CC=gcc
+AR=ar
 LIB_DIR=./lib
 INC_DIR=./include
 BIN_DIR=./bin
 SRC_DIR=./src
 
-all: regra1 regra2 regran
+all: libmthread.a
 
-regra1: #dependências para a regra1
-	$(CC) -o $(BIN_DIR)regra1 $(SRC_DIR)regra1.c -Wall
+libmthread.a: mthread.o
+	$(AR) crs $(LIB_DIR)/libmthread.a $(BIN_DIR)/mthread.o $(BIN_DIR)/mdata.o
 
-regra2: #dependências para a regra2
-	$(CC) -o $(BIN_DIR)regra2 $(SRC_DIR)regra2.c -Wall
+mthread.o: mdata.o
+	$(CC) -o $(BIN_DIR)/mthread.o -c $(SRC_DIR)/mthread.c -Wall
 
-regran: #dependências para a regran
-	$(CC) -o $(BIN_DIR)regran $(SRC_DIR)regran.c -Wall
+mdata.o:
+	$(CC) -o $(BIN_DIR)/mdata.o -c $(SRC_DIR)/mdata.c -Wall
 
 clean:
-	rm -rf $(LIB_DIR)/*.a $(BIN_DIR)/*.o $(SRC_DIR)/*~ $(INC_DIR)/*~ *~
+	rm -rf $(LIB_DIR)/libmthread.a $(LIB_DIR)/*.a $(BIN_DIR)/*.o $(SRC_DIR)/*~ $(INC_DIR)/*~ *~
 
 

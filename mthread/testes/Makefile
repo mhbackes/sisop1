@@ -12,13 +12,13 @@ mthread.o: $(SRC_DIR)/mthread.c $(INC_DIR)/mthread.h $(SRC_DIR)/mdata.c  $(INC_D
 	$(CC) -g -c $(SRC_DIR)/mthread.c
 
 queue: queue.c mdata.o
-	$(CC) -o queue -g queue.c mdata.o
+	$(CC) -o queue queue.c -g -L$(LIB_DIR) -lmthread -Wall
 
 mcreate: mcreate.c mcreate.o mthread.o mdata.o
-	$(CC) -o mcreate -g mcreate.c mthread.o mdata.o -Wall
+	$(CC) -o mcreate -g mcreate.c -L$(LIB_DIR) -lmthread  -Wall
 
 mutex: mutex.c mthread.o mdata.o
-	$(CC) -o mutex -g mutex.c mthread.o mdata.o -Wall
+	$(CC) -o mutex -g mutex.c -L$(LIB_DIR) -lmthread -Wall
 
 clean:
 	rm queue mcreate mutex *.o
