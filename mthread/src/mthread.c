@@ -63,6 +63,8 @@ int mlock(mmutex_t *mtx) {
 int munlock(mmutex_t *mtx) {
 	if (!mtx)
 		return -1;
+	if (mtx->flag == UNLOCKED)
+		return -1;
 	TCB_t* tcb = dequeue(&(mtx->first), &(mtx->last));
 	if (tcb) {
 		enqueue(&_ready_head[tcb->prio], &_ready_tail[tcb->prio], tcb);
