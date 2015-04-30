@@ -49,7 +49,7 @@ int _next_tid;
 
 // fun��es:
 
-TCB_t* find_blocked_thread(int tid);
+TCB_t* find_waited_thread(int tid);
 TCB_t* remove_blocked_thread(int tid);
 void insert_blocked_thread(int tid, TCB_t* tcb);
 
@@ -57,7 +57,7 @@ void enqueue(TCB_t** head, TCB_t** tail, TCB_t* tcb);
 TCB_t* dequeue(TCB_t** head, TCB_t** tail);
 
 TCB_t* thread_init(int tid, int state, int prio, void *(*start)(void*), void* arg);
-void thread_end();
+void terminate();
 TCB_t* main_thread_init();
 
 void init();

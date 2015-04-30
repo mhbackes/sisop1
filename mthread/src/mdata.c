@@ -36,6 +36,19 @@ TCB_t* dequeue(TCB_t** head, TCB_t** tail) {
 	return ret;
 }
 
+TCB_t* find_thread(TCB_t* head, TCB_t* tail, int tid) {
+	TCB_t* tcb = head;
+
+	while (tcb) {
+		if (tcb->tid == tid) {
+			return tcb;
+		}
+		tcb = tcb->next;
+	}
+
+	return NULL;	// caso não encontrar
+}
+
 void init() {
 	TCB_t *main_thread = main_thread_init();
 	getcontext(&(main_thread->context));
@@ -46,7 +59,7 @@ void init() {
 		_terminate_context.uc_link = NULL;
 		_terminate_context.uc_stack.ss_sp = _terminate_stack;
 		_terminate_context.uc_stack.ss_size = sizeof(_terminate_stack);
-		makecontext(&_terminate_context, (void (*)(void)) thread_end, 0);
+		makecontext(&_terminate_context, (void (*)(void)) terminate, 0);
 		getcontext(&_sched_context);
 		_sched_context.uc_link = NULL;
 		_sched_context.uc_stack.ss_sp = _sched_stack;
@@ -56,7 +69,7 @@ void init() {
 	}
 }
 
-TCB_t* main_thread_init(){
+TCB_t* main_thread_init() {
 	TCB_t* main_thread = (TCB_t*) malloc(sizeof(TCB_t));
 	main_thread->tid = 0;
 	main_thread->state = CREATION;
@@ -66,7 +79,8 @@ TCB_t* main_thread_init(){
 	return main_thread;
 }
 
-TCB_t* thread_init(int tid, int state, int prio, void *(*start)(void*), void* arg) {
+TCB_t* thread_init(int tid, int state, int prio, void *(*start)(void*),
+		void* arg) {
 	TCB_t* new_thread = (TCB_t*) malloc(sizeof(TCB_t));
 	new_thread->tid = tid;
 	new_thread->state = state;
@@ -77,16 +91,17 @@ TCB_t* thread_init(int tid, int state, int prio, void *(*start)(void*), void* ar
 	new_thread->context.uc_link = &_terminate_context; // toda thread retorna para o contexto do terminador quando termina
 	new_thread->context.uc_stack.ss_sp = malloc(SIGSTKSZ);
 	new_thread->context.uc_stack.ss_size = SIGSTKSZ;
-	makecontext(&(new_thread->context), (void (*)(void))start, 1, arg);
+	makecontext(&(new_thread->context), (void (*)(void)) start, 1, arg);
 	return new_thread;
 }
 
-void thread_end(){ //FUNÇÃO ARNOLD SCHWARZENEGGER
+void terminate() { //FUNÇÃO ARNOLD SCHWARZENEGGER
 	TCB_t* tcb = dequeue(&_run_head, &_run_tail);
 	tcb->state = TERMINATED;
 	TCB_t* waiting_tcb = remove_blocked_thread(tcb->tid);
-	if(waiting_tcb){
-		enqueue(&(_ready_head[waiting_tcb->prio]), &(_ready_tail[waiting_tcb->prio]), waiting_tcb);
+	if (waiting_tcb) {
+		enqueue(&(_ready_head[waiting_tcb->prio]),
+				&(_ready_tail[waiting_tcb->prio]), waiting_tcb);
 		waiting_tcb->state = READY;
 	}
 	free(tcb->context.uc_stack.ss_sp);
@@ -107,16 +122,29 @@ void schedule() {
 	}
 }
 
-TCB_t* find_blocked_thread(int tid) {
+TCB_t* find_waited_thread(int tid) {
 	BLOCKED_TCB_t* b_tcb = _blocked_head;
-	
+
 	while (b_tcb) {
 		if (b_tcb->waited_tid == tid) {
 			return b_tcb->waiting_tcb;
 		}
 		b_tcb = b_tcb->next;
 	}
-	
+
+	return NULL;	// caso não encontrar
+}
+
+TCB_t* find_blocked_thread(TCB_t* tcb) {
+	BLOCKED_TCB_t* b_tcb = _blocked_head;
+
+	while (b_tcb) {
+		if (b_tcb->waiting_tcb == tcb) {
+			return b_tcb->waiting_tcb;
+		}
+		b_tcb = b_tcb->next;
+	}
+
 	return NULL;	// caso não encontrar
 }
 
@@ -132,18 +160,18 @@ TCB_t* remove_blocked_thread(int tid) {
 	BLOCKED_TCB_t* b_tcb = _blocked_head;
 	BLOCKED_TCB_t* rem = NULL;
 	TCB_t* tcb;
-	
+
 	if (!b_tcb) {
 		return NULL;
 	}
-	
+
 	if (b_tcb->waited_tid == tid) {
 		tcb = b_tcb->waiting_tcb;
 		_blocked_head = _blocked_head->next;
 		free(b_tcb);
 		return tcb;
 	}
-	
+
 	while (b_tcb->next) {
 		if (b_tcb->next->waited_tid == tid) {
 			tcb = b_tcb->next->waiting_tcb;
@@ -154,6 +182,6 @@ TCB_t* remove_blocked_thread(int tid) {
 		}
 		b_tcb = b_tcb->next;
 	}
-	
+
 	return NULL;	// caso não encontrar
 }

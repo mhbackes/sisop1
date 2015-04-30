@@ -32,9 +32,16 @@ int mmutex_init(mmutex_t *mtx) {
 }
 
 int mwait(int tid) {
-	TCB_t* tcb = dequeue(&_run_head, &_run_tail);
-	if (find_blocked_thread(tid))
+	TCB_t* tcb = _run_head;
+	if (find_waited_thread(tid))
 		return -1;
+	TCB_t* w_tcb = NULL;
+	int i;
+	for (i = 0; i < 3 && !w_tcb; i++)
+		w_tcb = find_thread(_ready_head[i], _ready_tail[i], tid);
+	if (!w_tcb && !find_blocked_thread(tcb))
+		return -1;
+	tcb = dequeue(&_run_head, &_run_tail);
 	insert_blocked_thread(tid, tcb);
 	tcb->state = BLOCKED;
 	return swapcontext(&(tcb->context), &_sched_context);
