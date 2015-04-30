@@ -27,6 +27,7 @@ int main() {
 
 	mutex = malloc(sizeof(mmutex_t));
 	mmutex_init(mutex);
+	munlock(mutex);
 
 	for (i = 0; i < N_THREADS; ++i)
 		tids[i] = mcreate(0, (void *(*)(void*)) &print_thread_mutex, &tids[i]);

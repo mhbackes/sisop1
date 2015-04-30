@@ -4,7 +4,6 @@
  * preencher um vetor de 250 caracteres.
  */
 
-#include	"../include/mthread.h"
 #include	<stdio.h>
 #include	<stdlib.h>
 
