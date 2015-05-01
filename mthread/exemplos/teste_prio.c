@@ -9,7 +9,6 @@
  * (baixa). Isso altera a saída do programa em questão.
  */
 
-#include	"../include/mthread.h"
 #include	<stdio.h>
 #include	<stdlib.h>
 
@@ -25,7 +24,7 @@ void *func(void *arg){
        vetor[inc] = (int)arg;
        inc++;
        if ( (inc % 20) == 0 )
-           syield();
+           myield();
        else
            continue;
    }
