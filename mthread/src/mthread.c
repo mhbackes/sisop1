@@ -2,22 +2,29 @@
 #include "../include/mdata.h"
 
 int mcreate(int prio, void *(*start)(void*), void *arg) {
-	if (_next_tid == 0) {
-		init();
+	if (_next_tid_ == 0) {
+		if (init() < 0)
+			return -1;
 	}
-	TCB_t *new_thread = thread_init(_next_tid++, CREATION, prio, start, arg);
-	enqueue(&_ready_head[prio], &_ready_tail[prio], new_thread);
-	new_thread->state = READY;
-	return new_thread->tid;
+	TCB_t *n_tcb = thread_init(_next_tid_++, prio, start, arg);
+	if (!n_tcb)
+		return -1;
+	enqueue_ready(n_tcb);
+	return n_tcb->tid;
 }
 
 int myield() {
-	int prio = _run_head->prio;
-	TCB_t *yielded = dequeue(&_run_head, &_run_tail);
-	yielded->state = READY;
-	enqueue(&_ready_head[prio], &_ready_tail[prio], yielded);
-	int ret = swapcontext(&(yielded->context), &_sched_context);
-	return ret;
+	TCB_t *y_tcb = dequeue_running();
+	enqueue_ready(y_tcb);
+	return swapcontext(&(y_tcb->context), &_scheduler_context_);
+}
+
+int mwait(int tid) {
+	if (!thread_exists(tid) || find_waited_thread(tid))
+		return -1;
+	TCB_t* tcb = dequeue(&_running_head_, &_running_tail_);
+	insert_blocked_thread(tid, tcb);
+	return swapcontext(&(tcb->context), &_scheduler_context_);
 }
 
 int mmutex_init(mmutex_t *mtx) {
@@ -27,34 +34,16 @@ int mmutex_init(mmutex_t *mtx) {
 	mtx->flag = 0;
 	mtx->first = NULL;
 	mtx->last = NULL;
-
 	return 0;
-}
-
-int mwait(int tid) {
-	TCB_t* tcb = _run_head;
-	if (find_waited_thread(tid))
-		return -1;
-	TCB_t* w_tcb = NULL;
-	int i;
-	for (i = 0; i < 3 && !w_tcb; i++)
-		w_tcb = find_thread(_ready_head[i], _ready_tail[i], tid);
-	if (!w_tcb && !find_blocked_thread(tcb))
-		return -1;
-	tcb = dequeue(&_run_head, &_run_tail);
-	insert_blocked_thread(tid, tcb);
-	tcb->state = BLOCKED;
-	return swapcontext(&(tcb->context), &_sched_context);
 }
 
 int mlock(mmutex_t *mtx) {
 	if (!mtx)
 		return -1;
 	if (mtx->flag) {
-		_run_head->state = BLOCKED;
-		TCB_t* tcb = dequeue(&_run_head, &_run_tail);
-		enqueue(&(mtx->first), &(mtx->last), tcb);
-		swapcontext(&(tcb->context), &_sched_context);
+		TCB_t* tcb = dequeue_running();
+		enqueue_mutex(mtx, tcb);
+		swapcontext(&(tcb->context), &_scheduler_context_);
 	} else {
 		mtx->flag = LOCKED;
 	}
@@ -66,9 +55,9 @@ int munlock(mmutex_t *mtx) {
 		return -1;
 	if (mtx->flag == UNLOCKED)
 		return -1;
-	TCB_t* tcb = dequeue(&(mtx->first), &(mtx->last));
+	TCB_t* tcb = dequeue_mutex(mtx);
 	if (tcb) {
-		enqueue(&_ready_head[tcb->prio], &_ready_tail[tcb->prio], tcb);
+		enqueue_ready(tcb);
 	} else {
 		mtx->flag = UNLOCKED;
 	}

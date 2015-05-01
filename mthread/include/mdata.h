@@ -9,6 +9,7 @@
 
 #include <stdlib.h>
 #include <ucontext.h>
+#include "mthread.h"
 
 /* N�O ALTERAR ESSA struct */
 typedef struct TCB {
@@ -33,34 +34,47 @@ enum tcb_priority {	HIGH = 0, MEDIUM, LOW };
 
 enum mutex_state { UNLOCKED = 0, LOCKED };
 
-TCB_t* _ready_head[3];
-TCB_t* _ready_tail[3];
+TCB_t* _ready_head_[3];
+TCB_t* _ready_tail_[3];
 BLOCKED_TCB_t* _blocked_head;
-TCB_t* _run_head;
-TCB_t* _run_tail;
+TCB_t* _running_head_;
+TCB_t* _running_tail_;
 
-ucontext_t _sched_context;
+ucontext_t _scheduler_context_;
 char _sched_stack[SIGSTKSZ];
 
-ucontext_t _terminate_context;
+ucontext_t _terminator_context_;
 char _terminate_stack[SIGSTKSZ];
 
-int _next_tid;
+int _next_tid_;
 
 // fun��es:
 
+TCB_t* find_thread(TCB_t* head, TCB_t* tail, int tid);
+int thread_exists(int tid);
+
 TCB_t* find_waited_thread(int tid);
+TCB_t* find_blocked_thread(int tid);
 TCB_t* remove_blocked_thread(int tid);
 void insert_blocked_thread(int tid, TCB_t* tcb);
 
+TCB_t* find_thread(TCB_t* head, TCB_t* tail, int tid);
+
+void enqueue_ready(TCB_t* tcb);
+void enqueue_running(TCB_t* tcb);
+void enqueue_mutex(mmutex_t* mtx, TCB_t* tcb);
 void enqueue(TCB_t** head, TCB_t** tail, TCB_t* tcb);
+
+TCB_t* dequeue_ready(int prio);
+TCB_t* dequeue_running();
+TCB_t* dequeue_mutex(mmutex_t* mtx);
 TCB_t* dequeue(TCB_t** head, TCB_t** tail);
 
-TCB_t* thread_init(int tid, int state, int prio, void *(*start)(void*), void* arg);
+TCB_t* thread_init(int tid, int prio, void *(*start)(void*), void* arg);
 void terminate();
 TCB_t* main_thread_init();
 
-void init();
+int init();
 void schedule();
 
 #endif
