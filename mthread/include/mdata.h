@@ -11,6 +11,12 @@
 #include <ucontext.h>
 #include "mthread.h"
 
+#define N_PRIORITIES 3
+
+#define TRUE 1
+#define FALSE 0
+#define ERROR -1
+
 /* N�O ALTERAR ESSA struct */
 typedef struct TCB {
 	int tid;		// identificador da thread
@@ -24,7 +30,7 @@ typedef struct TCB {
 
 typedef struct BLOCKED_TCB {
 	int waited_tid;
-	TCB_t* waiting_tcb;
+	TCB_t* blocked_tcb;
 	struct BLOCKED_TCB *next;
 } BLOCKED_TCB_t;
 
@@ -34,9 +40,9 @@ enum tcb_priority {	HIGH = 0, MEDIUM, LOW };
 
 enum mutex_state { UNLOCKED = 0, LOCKED };
 
-TCB_t* _ready_head_[3];
-TCB_t* _ready_tail_[3];
-BLOCKED_TCB_t* _blocked_head;
+TCB_t* _ready_head_[N_PRIORITIES];
+TCB_t* _ready_tail_[N_PRIORITIES];
+BLOCKED_TCB_t* _blocked_head_;
 TCB_t* _running_head_;
 TCB_t* _running_tail_;
 
@@ -53,10 +59,10 @@ int _next_tid_;
 TCB_t* find_thread(TCB_t* head, TCB_t* tail, int tid);
 int thread_exists(int tid);
 
-TCB_t* find_waited_thread(int tid);
 TCB_t* find_blocked_thread(int tid);
-TCB_t* remove_blocked_thread(int tid);
-void insert_blocked_thread(int tid, TCB_t* tcb);
+int tcb_is_blocked(int tid);
+TCB_t* remove_blocked(int tid);
+void enqueue_blocked(int tid, TCB_t* tcb);
 
 TCB_t* find_thread(TCB_t* head, TCB_t* tail, int tid);
 
@@ -70,11 +76,13 @@ TCB_t* dequeue_running();
 TCB_t* dequeue_mutex(mmutex_t* mtx);
 TCB_t* dequeue(TCB_t** head, TCB_t** tail);
 
-TCB_t* thread_init(int tid, int prio, void *(*start)(void*), void* arg);
+TCB_t* tcb_init(int tid, int prio, void *(*start)(void*), void* arg);
 void terminate();
 TCB_t* main_thread_init();
 
 int init();
+int terminator_init();
+int scheduler_init();
 void schedule();
 
 #endif

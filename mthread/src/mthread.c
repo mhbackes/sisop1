@@ -2,11 +2,10 @@
 #include "../include/mdata.h"
 
 int mcreate(int prio, void *(*start)(void*), void *arg) {
-	if (_next_tid_ == 0) {
+	if (_next_tid_ == 0)
 		if (init() < 0)
 			return -1;
-	}
-	TCB_t *n_tcb = thread_init(_next_tid_++, prio, start, arg);
+	TCB_t *n_tcb = tcb_init(_next_tid_++, prio, start, arg);
 	if (!n_tcb)
 		return -1;
 	enqueue_ready(n_tcb);
@@ -20,10 +19,10 @@ int myield() {
 }
 
 int mwait(int tid) {
-	if (!thread_exists(tid) || find_waited_thread(tid))
+	if (!thread_exists(tid) || find_blocked_thread(tid))
 		return -1;
 	TCB_t* tcb = dequeue(&_running_head_, &_running_tail_);
-	insert_blocked_thread(tid, tcb);
+	enqueue_blocked(tid, tcb);
 	return swapcontext(&(tcb->context), &_scheduler_context_);
 }
 
@@ -44,9 +43,8 @@ int mlock(mmutex_t *mtx) {
 		TCB_t* tcb = dequeue_running();
 		enqueue_mutex(mtx, tcb);
 		swapcontext(&(tcb->context), &_scheduler_context_);
-	} else {
+	} else
 		mtx->flag = LOCKED;
-	}
 	return 0;
 }
 
@@ -56,10 +54,9 @@ int munlock(mmutex_t *mtx) {
 	if (mtx->flag == UNLOCKED)
 		return -1;
 	TCB_t* tcb = dequeue_mutex(mtx);
-	if (tcb) {
+	if (tcb)
 		enqueue_ready(tcb);
-	} else {
+	else
 		mtx->flag = UNLOCKED;
-	}
 	return 0;
 }
