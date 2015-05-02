@@ -20,11 +20,6 @@ void enqueue_running(TCB_t* tcb) {
 	tcb->state = RUNNING;
 }
 
-void enqueue_mutex(mmutex_t* mtx, TCB_t* tcb) {
-	enqueue(&(mtx->first), &(mtx->last), tcb);
-	tcb->state = BLOCKED;
-}
-
 void enqueue(TCB_t** head, TCB_t** tail, TCB_t* tcb) {
 	if (!*head) {
 		*head = tcb;
@@ -45,10 +40,6 @@ TCB_t* dequeue_ready(int prio) {
 
 TCB_t* dequeue_running() {
 	return dequeue(&_running_head_, &_running_tail_);
-}
-
-TCB_t* dequeue_mutex(mmutex_t* mtx) {
-	return dequeue(&(mtx->first), &(mtx->last));
 }
 
 TCB_t* dequeue(TCB_t** head, TCB_t** tail) {

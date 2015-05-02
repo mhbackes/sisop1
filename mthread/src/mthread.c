@@ -1,6 +1,5 @@
 #include "../include/mthread.h"
 #include "../include/mdata.h"
-
 int mcreate(int prio, void *(*start)(void*), void *arg) {
 	if (_next_tid_ == 0)
 		if (init() < 0)
@@ -41,7 +40,7 @@ int mlock(mmutex_t *mtx) {
 		return -1;
 	if (mtx->flag) {
 		TCB_t* tcb = dequeue_running();
-		enqueue_mutex(mtx, tcb);
+		enqueue(&(mtx->first), &(mtx->last), tcb);
 		swapcontext(&(tcb->context), &_scheduler_context_);
 	} else
 		mtx->flag = LOCKED;
@@ -53,7 +52,7 @@ int munlock(mmutex_t *mtx) {
 		return -1;
 	if (mtx->flag == UNLOCKED)
 		return -1;
-	TCB_t* tcb = dequeue_mutex(mtx);
+	TCB_t* tcb = dequeue(&(mtx->first), &(mtx->last));
 	if (tcb)
 		enqueue_ready(tcb);
 	else

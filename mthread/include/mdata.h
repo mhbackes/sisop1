@@ -9,7 +9,6 @@
 
 #include <stdlib.h>
 #include <ucontext.h>
-#include "mthread.h"
 
 #define N_PRIORITIES 3
 
@@ -68,12 +67,10 @@ TCB_t* find_thread(TCB_t* head, TCB_t* tail, int tid);
 
 void enqueue_ready(TCB_t* tcb);
 void enqueue_running(TCB_t* tcb);
-void enqueue_mutex(mmutex_t* mtx, TCB_t* tcb);
 void enqueue(TCB_t** head, TCB_t** tail, TCB_t* tcb);
 
 TCB_t* dequeue_ready(int prio);
 TCB_t* dequeue_running();
-TCB_t* dequeue_mutex(mmutex_t* mtx);
 TCB_t* dequeue(TCB_t** head, TCB_t** tail);
 
 TCB_t* tcb_init(int tid, int prio, void *(*start)(void*), void* arg);
