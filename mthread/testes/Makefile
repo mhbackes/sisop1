@@ -20,5 +20,8 @@ mcreate: mcreate.c mcreate.o mthread.o mdata.o
 mutex: mutex.c mthread.o mdata.o
 	$(CC) -o mutex -g mutex.c -L$(LIB_DIR) -lmthread -Wall
 
+mwait: mwait.c
+	$(CC) -o mwait -g mwait.c -L$(LIB_DIR) -lmthread -Wall
+
 clean:
-	rm queue mcreate mutex *.o
+	rm queue mcreate mutex mwait *.o
