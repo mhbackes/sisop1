@@ -26,7 +26,6 @@ int mwait(int tid) {
 }
 
 int mmutex_init(mmutex_t *mtx) {
-	mtx = (mmutex_t*) malloc(sizeof(mmutex_t));
 	if (!mtx)
 		return -1;
 	mtx->flag = 0;
