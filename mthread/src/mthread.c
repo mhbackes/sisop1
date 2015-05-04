@@ -30,6 +30,8 @@ int mwait(int tid) {
 }
 
 int mmutex_init(mmutex_t *mtx) {
+	if (!mtx)
+		return -1;
 	mtx->flag = 0;
 	mtx->first = NULL;
 	mtx->last = NULL;
