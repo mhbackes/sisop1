@@ -12,12 +12,16 @@ int mcreate(int prio, void *(*start)(void*), void *arg) {
 }
 
 int myield() {
+	if (!_running_head_)
+		return -1;
 	TCB_t *y_tcb = dequeue_running();
 	enqueue_ready(y_tcb);
 	return swapcontext(&(y_tcb->context), &_scheduler_context_);
 }
 
 int mwait(int tid) {
+	if (!_running_head_)
+		return -1;
 	if (!tcb_exists(tid) || find_blocked_waiting_tcb(tid))
 		return -1;
 	TCB_t* tcb = dequeue(&_running_head_, &_running_tail_);
@@ -35,6 +39,8 @@ int mmutex_init(mmutex_t *mtx) {
 int mlock(mmutex_t *mtx) {
 	if (!mtx)
 		return -1;
+	if (!_running_head_)
+		return -1;
 	if (mtx->flag) {
 		TCB_t* tcb = dequeue_running();
 		enqueue(&(mtx->first), &(mtx->last), tcb);
@@ -47,6 +53,8 @@ int mlock(mmutex_t *mtx) {
 
 int munlock(mmutex_t *mtx) {
 	if (!mtx)
+		return -1;
+	if (!_running_head_)
 		return -1;
 	if (mtx->flag == UNLOCKED)
 		return -1;
