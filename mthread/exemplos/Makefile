@@ -25,6 +25,9 @@ mandel: mandel.c $(LIB_DIR)/libmthread.a
 primos: primos.c $(LIB_DIR)/libmthread.a
 	$(CC) -g -o primos primos.c -L$(LIB_DIR) -lmthread -lm -Wall
 
+primos_prio: primos_prio.c $(LIB_DIR)/libmthread.a
+	$(CC) -g -o primos_prio primos_prio.c -L$(LIB_DIR) -lmthread -lm -Wall
+
 clean:
 	rm -rf exemplo mandel teste_vetor teste_prio primos *~ *.o
 

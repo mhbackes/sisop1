@@ -27,11 +27,16 @@ typedef struct TCB {
 	struct TCB *next;		// ponteiro para o pr�ximo TCB da lista
 } TCB_t;
 
-typedef struct BLOCKED_TCB {
+typedef struct BLOCKED_WAITING_TCB {
 	int waited_tid;
 	TCB_t* blocked_tcb;
-	struct BLOCKED_TCB *next;
-} BLOCKED_TCB_t;
+	struct BLOCKED_WAITING_TCB *next;
+} BW_TCB_t;
+
+typedef struct BLOCKED_MUTEX_TCB {
+	int tid;
+	struct BLOCKED_MUTEX_TCB *next;
+} BM_TCB_t;
 
 enum tcb_state { CREATION = 0, READY, RUNNING, BLOCKED, TERMINATED };
 
@@ -41,7 +46,8 @@ enum mutex_state { UNLOCKED = 0, LOCKED };
 
 TCB_t* _ready_head_[N_PRIORITIES];
 TCB_t* _ready_tail_[N_PRIORITIES];
-BLOCKED_TCB_t* _blocked_head_;
+BW_TCB_t* _blocked_waiting_head_;
+BM_TCB_t* _blocked_mutex_head_;
 TCB_t* _running_head_;
 TCB_t* _running_tail_;
 
@@ -56,12 +62,19 @@ int _next_tid_;
 // fun��es:
 
 TCB_t* find_thread(TCB_t* head, TCB_t* tail, int tid);
-int thread_exists(int tid);
+int tcb_exists(int tid);
 
-TCB_t* find_blocked_thread(int tid);
-int tcb_is_blocked(int tid);
-TCB_t* remove_blocked(int tid);
-void enqueue_blocked(int tid, TCB_t* tcb);
+int tcb_is_blocked_waiting(int tid);
+int tcb_is_blocked_mutex(int tid);
+
+void insert_blocked_waiting(int tid, TCB_t* tcb);
+TCB_t* find_blocked_waiting_tcb(int tid);
+TCB_t* remove_blocked_waiting(int tid);
+
+void insert_blocked_mutex(int tid);
+void remove_blocked_mutex(int tid);
+
+
 
 TCB_t* find_thread(TCB_t* head, TCB_t* tail, int tid);
 

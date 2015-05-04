@@ -54,7 +54,7 @@ TCB_t* dequeue(TCB_t** head, TCB_t** tail) {
 	return ret;
 }
 
-int thread_exists(int tid) {
+int tcb_exists(int tid) {
 	if (tid >= _next_tid_ || tid < 0)
 		return FALSE;
 	int i;
@@ -62,7 +62,7 @@ int thread_exists(int tid) {
 	for (i = 0; i < N_PRIORITIES && !tcb; i++) {
 		tcb = find_thread(_ready_head_[i], _ready_tail_[i], tid);
 	}
-	if (tcb || tcb_is_blocked(tid))
+	if (tcb || tcb_is_blocked_waiting(tid) || tcb_is_blocked_waiting(tid))
 		return TRUE;
 	return FALSE;
 }
@@ -79,9 +79,9 @@ TCB_t* find_thread(TCB_t* head, TCB_t* tail, int tid) {
 }
 
 int init() {
-	if(terminator_init() < 0)
+	if (terminator_init() < 0)
 		return -1;
-	if(scheduler_init() < 0)
+	if (scheduler_init() < 0)
 		return -1;
 	TCB_t *main_thread = main_thread_init();
 	enqueue_ready(main_thread);
@@ -127,14 +127,14 @@ TCB_t* tcb_init(int tid, int prio, void *(*start)(void*), void* arg) {
 	n_tcb->prio = prio;
 	n_tcb->prev = NULL;
 	n_tcb->next = NULL;
-	if(getcontext(&(n_tcb->context)) < 0){
+	if (getcontext(&(n_tcb->context)) < 0) {
 		free(n_tcb);
 		return NULL;
 	}
 	n_tcb->context.uc_link = &_terminator_context_;
 	n_tcb->context.uc_stack.ss_sp = malloc(SIGSTKSZ);
 	n_tcb->context.uc_stack.ss_size = SIGSTKSZ;
-	if(!n_tcb->context.uc_stack.ss_sp){
+	if (!n_tcb->context.uc_stack.ss_sp) {
 		free(n_tcb);
 		return NULL;
 	}
@@ -145,7 +145,7 @@ TCB_t* tcb_init(int tid, int prio, void *(*start)(void*), void* arg) {
 void terminate() {
 	TCB_t* tcb = dequeue_running();
 	tcb->state = TERMINATED;
-	TCB_t* b_tcb = remove_blocked(tcb->tid);
+	TCB_t* b_tcb = remove_blocked_waiting(tcb->tid);
 	if (b_tcb) {
 		enqueue_ready(b_tcb);
 	}
@@ -165,19 +165,8 @@ void schedule() {
 	}
 }
 
-TCB_t* find_blocked_thread(int waited_tid) {
-	BLOCKED_TCB_t* b_tcb = _blocked_head_;
-	while (b_tcb) {
-		if (b_tcb->waited_tid == waited_tid) {
-			return b_tcb->blocked_tcb;
-		}
-		b_tcb = b_tcb->next;
-	}
-	return NULL;
-}
-
-int tcb_is_blocked(int tid) {
-	BLOCKED_TCB_t* b_tcb = _blocked_head_;
+int tcb_is_blocked_waiting(int tid) {
+	BW_TCB_t* b_tcb = _blocked_waiting_head_;
 	while (b_tcb) {
 		if (b_tcb->blocked_tcb->tid == tid) {
 			return TRUE;
@@ -187,25 +176,36 @@ int tcb_is_blocked(int tid) {
 	return FALSE;
 }
 
-void enqueue_blocked(int tid, TCB_t* tcb) {
-	BLOCKED_TCB_t* b_tcb = (BLOCKED_TCB_t*) malloc(sizeof(BLOCKED_TCB_t));
+void insert_blocked_waiting(int tid, TCB_t* tcb) {
+	BW_TCB_t* b_tcb = (BW_TCB_t*) malloc(sizeof(BW_TCB_t));
 	b_tcb->blocked_tcb = tcb;
 	tcb->state = BLOCKED;
 	b_tcb->waited_tid = tid;
-	b_tcb->next = _blocked_head_;
-	_blocked_head_ = b_tcb;
+	b_tcb->next = _blocked_waiting_head_;
+	_blocked_waiting_head_ = b_tcb;
 }
 
-TCB_t* remove_blocked(int tid) {
-	BLOCKED_TCB_t* b_tcb = _blocked_head_;
-	BLOCKED_TCB_t* rem = NULL;
+TCB_t* find_blocked_waiting_tcb(int waited_tid) {
+	BW_TCB_t* b_tcb = _blocked_waiting_head_;
+	while (b_tcb) {
+		if (b_tcb->waited_tid == waited_tid) {
+			return b_tcb->blocked_tcb;
+		}
+		b_tcb = b_tcb->next;
+	}
+	return NULL;
+}
+
+TCB_t* remove_blocked_waiting(int tid) {
+	BW_TCB_t* b_tcb = _blocked_waiting_head_;
+	BW_TCB_t* rem = NULL;
 	TCB_t* tcb;
 	if (!b_tcb) {
 		return NULL;
 	}
 	if (b_tcb->waited_tid == tid) {
 		tcb = b_tcb->blocked_tcb;
-		_blocked_head_ = _blocked_head_->next;
+		_blocked_waiting_head_ = _blocked_waiting_head_->next;
 		free(b_tcb);
 		return tcb;
 	}
@@ -220,4 +220,44 @@ TCB_t* remove_blocked(int tid) {
 		b_tcb = b_tcb->next;
 	}
 	return NULL;
+}
+
+void insert_blocked_mutex(int tid) {
+	BM_TCB_t* m_tcb = (BM_TCB_t*) malloc(sizeof(BM_TCB_t));
+	m_tcb->tid = tid;
+	m_tcb->next = _blocked_mutex_head_;
+	_blocked_mutex_head_ = m_tcb;
+}
+
+void remove_blocked_mutex(int tid) {
+	BM_TCB_t* b_tcb = _blocked_mutex_head_;
+	BM_TCB_t* rem = NULL;
+	if (!b_tcb) {
+		return;
+	}
+	if (b_tcb->tid == tid) {
+		_blocked_mutex_head_ = _blocked_mutex_head_->next;
+		free(b_tcb);
+	}
+	while (b_tcb->next) {
+		if (b_tcb->next->tid == tid) {
+			rem = b_tcb->next;
+			b_tcb->next = rem->next;
+			free(rem);
+			return;
+		}
+		b_tcb = b_tcb->next;
+	}
+	return;
+}
+
+int tcb_is_blocked_mutex(int tid) {
+	BM_TCB_t* b_tcb = _blocked_mutex_head_;
+	while (b_tcb) {
+		if (b_tcb->tid == tid) {
+			return TRUE;
+		}
+		b_tcb = b_tcb->next;
+	}
+	return FALSE;
 }
