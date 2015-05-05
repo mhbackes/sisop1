@@ -1,6 +1,5 @@
 #include "../include/mthread.h"
 #include "../include/mdata.h"
-
 int mcreate(int prio, void *(*start)(void*), void *arg) {
 	if (_next_tid_ == 0)
 		if (init() < 0)
@@ -13,21 +12,24 @@ int mcreate(int prio, void *(*start)(void*), void *arg) {
 }
 
 int myield() {
+	if (!_running_head_)
+		return -1;
 	TCB_t *y_tcb = dequeue_running();
 	enqueue_ready(y_tcb);
 	return swapcontext(&(y_tcb->context), &_scheduler_context_);
 }
 
 int mwait(int tid) {
-	if (!thread_exists(tid) || find_blocked_thread(tid))
+	if (!_running_head_)
+		return -1;
+	if (!tcb_exists(tid) || find_blocked_waiting_tcb(tid))
 		return -1;
 	TCB_t* tcb = dequeue(&_running_head_, &_running_tail_);
-	enqueue_blocked(tid, tcb);
+	insert_blocked_waiting(tid, tcb);
 	return swapcontext(&(tcb->context), &_scheduler_context_);
 }
 
 int mmutex_init(mmutex_t *mtx) {
-	mtx = (mmutex_t*) malloc(sizeof(mmutex_t));
 	if (!mtx)
 		return -1;
 	mtx->flag = 0;
@@ -39,9 +41,12 @@ int mmutex_init(mmutex_t *mtx) {
 int mlock(mmutex_t *mtx) {
 	if (!mtx)
 		return -1;
+	if (!_running_head_)
+		return -1;
 	if (mtx->flag) {
 		TCB_t* tcb = dequeue_running();
-		enqueue_mutex(mtx, tcb);
+		enqueue(&(mtx->first), &(mtx->last), tcb);
+		insert_blocked_mutex(tcb->tid);
 		swapcontext(&(tcb->context), &_scheduler_context_);
 	} else
 		mtx->flag = LOCKED;
@@ -51,12 +56,15 @@ int mlock(mmutex_t *mtx) {
 int munlock(mmutex_t *mtx) {
 	if (!mtx)
 		return -1;
+	if (!_running_head_)
+		return -1;
 	if (mtx->flag == UNLOCKED)
 		return -1;
-	TCB_t* tcb = dequeue_mutex(mtx);
-	if (tcb)
+	TCB_t* tcb = dequeue(&(mtx->first), &(mtx->last));
+	if (tcb) {
 		enqueue_ready(tcb);
-	else
+		remove_blocked_mutex(tcb->tid);
+	} else
 		mtx->flag = UNLOCKED;
 	return 0;
 }

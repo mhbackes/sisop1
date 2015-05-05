@@ -6,10 +6,11 @@ CC=gcc
 LIB_DIR=../lib
 SRC_DIR=../src
 INC_DIR=../include
+BIN_DIR=../bin
 
-all: exemplo mandel teste_vetor teste_prio
+all: exemplo mandel teste_vetor teste_prio primos
 
-exemplo: exemplo.c libmthread.a
+exemplo: exemplo.c $(LIB_DIR)/libmthread.a
 	$(CC) -g -o exemplo exemplo.c -L$(LIB_DIR) -lmthread -Wall
 
 teste_vetor: teste_vetor.c $(LIB_DIR)/libmthread.a
@@ -21,20 +22,14 @@ teste_prio: teste_prio.c $(LIB_DIR)/libmthread.a
 mandel: mandel.c $(LIB_DIR)/libmthread.a
 	$(CC) -g -o mandel mandel.c -L$(LIB_DIR) -lmthread -lm -Wall
 
-libmthread.a: mthread.o mdata.o
-	ar crs $(LIB_DIR)/libmthread.a mthread.o mdata.o
+primos: primos.c $(LIB_DIR)/libmthread.a
+	$(CC) -g -o primos primos.c -L$(LIB_DIR) -lmthread -lm -Wall
 
-mthread.o: $(SRC_DIR)/mthread.c
-	$(CC) -g -c $(SRC_DIR)/mthread.c
-
-mdata.o: $(SRC_DIR)/mdata.c
-	$(CC) -g -c $(SRC_DIR)/mdata.c
-
-debug: mthread.o mdata.o
-	$(CC) -g -o exemplo exemplo.c mthread.o mdata.o
+primos_prio: primos_prio.c $(LIB_DIR)/libmthread.a
+	$(CC) -g -o primos_prio primos_prio.c -L$(LIB_DIR) -lmthread -lm -Wall
 
 clean:
-	rm -rf exemplo mandel teste_vetor teste_prio *~ *.o
+	rm -rf exemplo mandel teste_vetor teste_prio primos *~ *.o
 
 
 
