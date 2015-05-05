@@ -4,11 +4,12 @@
  * preencher um vetor de 250 caracteres.
  */
 
+#include	"../include/mthread.h"
 #include	<stdio.h>
 #include	<stdlib.h>
 
-#define		MAX_SIZE	20
-#define		MAX_THR		20
+#define		MAX_SIZE	250
+#define		MAX_THR		10
 
 int vetor[MAX_SIZE];
 int  inc = 0;

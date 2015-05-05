@@ -8,7 +8,7 @@
  *
  */
 
-#include <stdio.h>
+#include "../include/mthread.h"
 
 void* func0(void *arg) {
 	printf("Eu sou a thread ID0 imprimindo %d\n", *((int *)arg));
@@ -25,13 +25,12 @@ int main(int argc, char *argv[]) {
 	int i;
 
     id0 = mcreate(0, func0, (void *)&i);
-    myield();
     id1 = mcreate(1, func1, (void *)&i);
-	myield();
+
     printf("Eu sou a main após a criação de ID0 e ID1\n");
 
-    //mwait(id0);
-    //mwait(id1);
+    mwait(id0);
+    mwait(id1);
 
     printf("Eu sou a main voltando para terminar o programa\n");
 }
