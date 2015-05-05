@@ -47,11 +47,11 @@ int main(int argc, char* argv[]) {
 
 	int* tids = malloc(sizeof(int) * n_max);
 
-	mmutex_init(&mutex);	
+	mmutex_init(&mutex);
 
 	printf("Primes in [0, %d):\n", n_max);
 	for (i = 0; i < n_max; i++)
-		tids[i] = mcreate(1, (void*(*)(void*)) print_primes, NULL);
+		tids[i] = mcreate(i % 3, (void*(*)(void*)) print_primes, NULL);
 
 	for (i = 0; i < n_max; i++)
 		mwait(tids[i]);

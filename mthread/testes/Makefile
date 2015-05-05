@@ -3,13 +3,10 @@ LIB_DIR=../lib
 SRC_DIR=../src
 INC_DIR=../include
 
-all: mcreate mutex myield mmutex_init mlock mwait munlock
+all: mcreate myield mmutex_init mlock mwait munlock primos
 
-mcreate: test_mcreate.c $(LIB_DIR)/libmthread.a
-	$(CC) -o mcreate -g test_mcreate.c -L$(LIB_DIR) -lmthread  -Wall
-
-mutex: mutex.c $(LIB_DIR)/libmthread.a
-	$(CC) -o mutex -g mutex.c -L$(LIB_DIR) -lmthread -Wall
+mcreate: mcreate.c $(LIB_DIR)/libmthread.a
+	$(CC) -o mcreate -g mcreate.c -L$(LIB_DIR) -lmthread  -Wall
 
 mwait: mwait.c $(LIB_DIR)/libmthread.a
 	$(CC) -o mwait -g mwait.c -L$(LIB_DIR) -lmthread -Wall
@@ -25,6 +22,9 @@ mlock: mlock.c $(LIB_DIR)/libmthread.a
 
 munlock: munlock.c $(LIB_DIR)/libmthread.a
 	$(CC) -o munlock -g munlock.c -L$(LIB_DIR) -lmthread -Wall
+
+primos: primos.c $(LIB_DIR)/libmthread.a
+	$(CC) -o primos -g primos.c -L$(LIB_DIR) -lmthread -Wall
 	
 clean:
-	rm myield mcreate mutex mwait mlock mmutex_init munlock *.o
+	rm -rf myield mcreate mwait mlock mmutex_init munlock primos *.o *~
