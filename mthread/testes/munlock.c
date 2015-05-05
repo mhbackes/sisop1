@@ -1,3 +1,15 @@
+
+/*
+ *  Teste munlock
+ *
+ *  Esse programa tenta chamar a função munlock antes do escalonador
+ *  iniciar, o que retorna -1. Em seguida, são criadas 3 threads que
+ *  compartilham uma seção crítica. Elas utilizam a função munlock
+ *  quando deixam a seção crítica, liberando a primeira da fila, caso ela
+ *  exista. No fim, o programa tenta executar um munlock com o mutex livre e
+ *  o retorno é -1.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "../include/mthread.h"

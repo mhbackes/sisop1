@@ -1,3 +1,18 @@
+
+/*
+ *  Teste mcreate
+ *
+ *  Neste teste, primeiro, é verificado se a função é capaz de tratar entradas
+ *  inválidas e, por isso, ela é chamada duaz vezes com prioridade -1 e 3.
+ *  Espera-se que a função retorne -1, mostrando que não foi possível criar
+ *  threads com tais prioridades. Depois disso, são criadas 6 threads (2
+ *  threads para cada prioridade) para executar a mesma função que imprime o tid
+ *  e prioridade da thread executada e a thread main aguarda o término delas.
+ *  Espera-se que as 2 threads de prioridade 0 sejam executadas primeiro,
+ *  seguidas das threads de prioridade 1 e por último as threads de prioridade
+ *  2.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "../include/mthread.h"

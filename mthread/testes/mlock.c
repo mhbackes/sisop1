@@ -1,3 +1,19 @@
+
+/*
+ *  Teste mlock
+ *
+ *  Neste programa, primeiro, é testado chamar a função mlock antes de
+ *  inicializar o escalonador. Espera-se que a função retorne -1. Depois
+ *  disso, são criadas 3 threads de mesma prioridade para executar uma função
+ *  que contém uma região crítica (com um myield proposital no meio) e a thread
+ *  main aguarda por elas. É esperado que a primeira thread entre na região
+ *  crítica, execute myield e que as outras duas threads sejem
+ *  bloqueadas ao tentar entrar na região crítica. Depois disso, a primeira
+ *  thread libera o mutex e termina de executar. Espera-se que a segunda
+ *  thread entre no mutex e termine de executar e só depois a terceira thread
+ *  será executada.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "../include/mthread.h"

@@ -1,3 +1,18 @@
+
+/*
+ *  Teste mwait
+ *
+ *  Esse programa, primeiramente, tenta excutar o mwait passando o id
+ *  de uma thread inexistente, retornando -1. Em seguida, ele cria 5 threads
+ *  de prioridades variadas, e cada uma dela espera outra de prioridade mais
+ *  baixa. A sexta thread tem a prioridade mais baixa possível e executa um
+ *  myield, mas logo volta a executar, pois todas as threads outras estão
+ *  bloqueadas. Quando ela termina, as outras threads são liberadas em
+ *  sequência e a última thread a executar é sempre a primeira a ser criada.
+ *  Após o término das threads, a main tenta esperar ela mesma,
+ *  retornando -1. 
+ */
+
 #include <stdlib.h>
 #include <stdio.h>
 #include "../include/mthread.h"
