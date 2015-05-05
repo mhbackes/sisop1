@@ -1,6 +1,8 @@
 #include "../include/mthread.h"
 #include "../include/mdata.h"
 int mcreate(int prio, void *(*start)(void*), void *arg) {
+	if (prio < 0 || prio > 2)
+		return -1;
 	if (_next_tid_ == 0)
 		if (init() < 0)
 			return -1;
