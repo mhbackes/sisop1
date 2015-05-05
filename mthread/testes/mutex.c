@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include "../include/mthread.h"
 
-#define N_THREADS 5
+#define N_THREADS 7
 
 mmutex_t* mutex;
 
