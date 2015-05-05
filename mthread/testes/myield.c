@@ -14,8 +14,8 @@ void print_thread_yield(thread_t* t){
 	int i;
 	printf("Thread: %d, prio: %d - executando.\n", t->id, t->prio);
 	for (i = 0; i < 3; i++) {
-		myield();
 		printf("Thread: %d, prio: %d - yield.\n", t->id, t->prio);
+		myield();
 	}
 	printf("Thread: %d, prio: %d - terminando.\n", t->id, t->prio);
 }
