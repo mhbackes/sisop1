@@ -27,4 +27,4 @@ mlock: mlock.c $(LIB_DIR)/libmthread.a
 	$(CC) -o mlock -g mlock.c -L$(LIB_DIR) -lmthread -Wall
 	
 clean:
-	rm queue myield mcreate mutex mwait *.o
+	rm queue myield mcreate mutex mwait mlock mmutex_init *.o
