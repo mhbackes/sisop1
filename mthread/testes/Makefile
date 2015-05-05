@@ -3,10 +3,7 @@ LIB_DIR=../lib
 SRC_DIR=../src
 INC_DIR=../include
 
-all: queue mcreate mutex myield mmutex_init mlock
-
-queue: queue.c 
-	$(CC) -o queue queue.c -g -L$(LIB_DIR) -lmthread -Wall
+all: mcreate mutex myield mmutex_init mlock mwait munlock
 
 mcreate: test_mcreate.c $(LIB_DIR)/libmthread.a
 	$(CC) -o mcreate -g test_mcreate.c -L$(LIB_DIR) -lmthread  -Wall
@@ -25,6 +22,9 @@ mmutex_init: mmutex_init.c $(LIB_DIR)/libmthread.a
 	
 mlock: mlock.c $(LIB_DIR)/libmthread.a
 	$(CC) -o mlock -g mlock.c -L$(LIB_DIR) -lmthread -Wall
+
+munlock: munlock.c $(LIB_DIR)/libmthread.a
+	$(CC) -o munlock -g munlock.c -L$(LIB_DIR) -lmthread -Wall
 	
 clean:
-	rm queue myield mcreate mutex mwait mlock mmutex_init *.o
+	rm myield mcreate mutex mwait mlock mmutex_init munlock *.o
