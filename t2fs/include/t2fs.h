@@ -1,11 +1,12 @@
 
-
 #ifndef __LIBT2FS___
 #define __LIBT2FS___
 
 #define TYPEVAL_REGULAR     0x01
 #define TYPEVAL_DIRETORIO   0x02
 #define TYPEVAL_INVALIDO    0xFF
+
+#define SECTOR_SIZE		256
 
 typedef int FILE2;
 typedef int DIR2;
@@ -53,6 +54,13 @@ typedef struct {
     unsigned long fileSize;
 } DIRENT2;
 
+/** global variables */
+struct t2fs_superbloco _sblock_;
+
+/** internal functions */
+int init();
+
+/** user functions */
 int identify2 (char *name, int size);
 
 FILE2 create2 (char *filename);
