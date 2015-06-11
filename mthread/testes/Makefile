@@ -3,28 +3,28 @@ LIB_DIR=../lib
 SRC_DIR=../src
 INC_DIR=../include
 
-all: mcreate mutex myield mmutex_init mlock mwait munlock
+all: mcreate myield mmutex_init mlock mwait munlock primos
 
-mcreate: test_mcreate.c $(LIB_DIR)/libmthread.a
-	$(CC) -o mcreate -g test_mcreate.c -L$(LIB_DIR) -lmthread  -Wall
-
-mutex: mutex.c $(LIB_DIR)/libmthread.a
-	$(CC) -o mutex -g mutex.c -L$(LIB_DIR) -lmthread -Wall
+mcreate: mcreate.c $(LIB_DIR)/libmthread.a
+	$(CC) -o mcreate mcreate.c -L$(LIB_DIR) -lmthread  -Wall
 
 mwait: mwait.c $(LIB_DIR)/libmthread.a
-	$(CC) -o mwait -g mwait.c -L$(LIB_DIR) -lmthread -Wall
+	$(CC) -o mwait mwait.c -L$(LIB_DIR) -lmthread -Wall
 
 myield: myield.c $(LIB_DIR)/libmthread.a
-	$(CC) -o myield -g myield.c -L$(LIB_DIR) -lmthread -Wall
+	$(CC) -o myield myield.c -L$(LIB_DIR) -lmthread -Wall
 	
 mmutex_init: mmutex_init.c $(LIB_DIR)/libmthread.a
-	$(CC) -o mmutex_init -g mmutex_init.c -L$(LIB_DIR) -lmthread -Wall
+	$(CC) -o mmutex_init mmutex_init.c -L$(LIB_DIR) -lmthread -Wall
 	
 mlock: mlock.c $(LIB_DIR)/libmthread.a
-	$(CC) -o mlock -g mlock.c -L$(LIB_DIR) -lmthread -Wall
+	$(CC) -o mlock mlock.c -L$(LIB_DIR) -lmthread -Wall
 
 munlock: munlock.c $(LIB_DIR)/libmthread.a
-	$(CC) -o munlock -g munlock.c -L$(LIB_DIR) -lmthread -Wall
+	$(CC) -o munlock munlock.c -L$(LIB_DIR) -lmthread -Wall
+
+primos: primos.c $(LIB_DIR)/libmthread.a
+	$(CC) -o primos primos.c -L$(LIB_DIR) -lmthread -Wall
 	
 clean:
-	rm myield mcreate mutex mwait mlock mmutex_init munlock *.o
+	rm -rf myield mcreate mwait mlock mmutex_init munlock primos *.o *~
