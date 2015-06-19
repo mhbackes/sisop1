@@ -17,24 +17,24 @@ typedef unsigned int DWORD;
 
 /** Superbloco */
 struct t2fs_superbloco {
-    char    Id[4];          /* Identificação do sistema de arquivo. É formado pelas letras “T2FS”. */
-    WORD    Version;        /* Versão atual desse sistema de arquivos: (valor fixo 7DE=2014; 2=2 semestre). */
+    char    Id[4];          /* Identificaï¿½ï¿½o do sistema de arquivo. ï¿½ formado pelas letras ï¿½T2FSï¿½. */
+    WORD    Version;        /* Versï¿½o atual desse sistema de arquivos: (valor fixo 7DE=2014; 2=2 semestre). */
     WORD    SuperBlockSize; /* Quantidade de setores  que formam o superbloco. (fixo em 1 setor) */
-    DWORD   DiskSize;       /* Tamanho total da partição T2FS, incluindo o tamanho do superblock. */
-    DWORD   NofBlocks;      /* Quantidade total de blocos de dados na partição T2FS (1024 blocos). */
+    DWORD   DiskSize;       /* Tamanho total da partiï¿½ï¿½o T2FS, incluindo o tamanho do superblock. */
+    DWORD   NofBlocks;      /* Quantidade total de blocos de dados na partiï¿½ï¿½o T2FS (1024 blocos). */
     DWORD   BlockSize;      /* Tamanho de um bloco.*/
-    DWORD   BitmapBlocks;	/* Primeiro bloco lógico do bitmap de blocos livres e ocupados*/
-    DWORD   BitmapInodes;	/* Primeiro bloco lógico do bitmap de i-nodes livres e ocupados.*/
-    DWORD   InodeBlock;		/* Primeiro bloco lógico da área de i-nodes*/
-    DWORD   FirstDataBlock;	/* Primeiro bloco lógico da área de blocos de dados.*/
+    DWORD   BitmapBlocks;	/* Primeiro bloco lï¿½gico do bitmap de blocos livres e ocupados*/
+    DWORD   BitmapInodes;	/* Primeiro bloco lï¿½gico do bitmap de i-nodes livres e ocupados.*/
+    DWORD   InodeBlock;		/* Primeiro bloco lï¿½gico da ï¿½rea de i-nodes*/
+    DWORD   FirstDataBlock;	/* Primeiro bloco lï¿½gico da ï¿½rea de blocos de dados.*/
 } __attribute__((packed));
 
-/** Registro de diretório (entrada de diretório) */
+/** Registro de diretï¿½rio (entrada de diretï¿½rio) */
 struct t2fs_record {
-    BYTE    TypeVal;        /* Tipo da entrada. Indica se o registro é inválido (0xFF), arquivo (0x01 ou diretório (0x02) */
-    char    name[31];       /* Nome do arquivo. : string com caracteres ASCII (0x21 até 0x7A), case sensitive. */
-    DWORD   blocksFileSize; /* Tamanho do arquivo, expresso em número de blocos de dados */
-    DWORD   bytesFileSize;  /* Tamanho do arquivo. Expresso em número de bytes. */
+    BYTE    TypeVal;        /* Tipo da entrada. Indica se o registro ï¿½ invï¿½lido (0xFF), arquivo (0x01 ou diretï¿½rio (0x02) */
+    char    name[31];       /* Nome do arquivo. : string com caracteres ASCII (0x21 atï¿½ 0x7A), case sensitive. */
+    DWORD   blocksFileSize; /* Tamanho do arquivo, expresso em nï¿½mero de blocos de dados */
+    DWORD   bytesFileSize;  /* Tamanho do arquivo. Expresso em nï¿½mero de bytes. */
     DWORD   i_node;         /* i-node do arquivo */
     char    Reserved[20];
 } __attribute__((packed));
@@ -42,9 +42,9 @@ struct t2fs_record {
 /** i-node */
 struct t2fs_inode {
     DWORD   dataPtr[10];    /* Ponteiros diretos para blocos de dados do arquivo */
-    DWORD   singleIndPtr;   /* Ponteiro de indireção simples */
-    DWORD   doubleIndPtr;   /* Ponteiro de indireção dupla */
-    char    Reserved[16];   /* Não usados */
+    DWORD   singleIndPtr;   /* Ponteiro de indireï¿½ï¿½o simples */
+    DWORD   doubleIndPtr;   /* Ponteiro de indireï¿½ï¿½o dupla */
+    char    Reserved[16];   /* Nï¿½o usados */
 } __attribute__((packed));
 
 #define MAX_FILE_NAME_SIZE 255
@@ -55,10 +55,28 @@ typedef struct {
 } DIRENT2;
 
 /** global variables */
-struct t2fs_superbloco _sblock_;
+#define NULL_BLOCK 0x0FFFFFFFF
+struct t2fs_superbloco _super_block_;
+int _inode_size_;
+int _record_size_;
+int _sectors_per_block_;
+int _inodes_per_block_;
+int _records_per_block_;
+int _current_dir_inode_;
 
 /** internal functions */
 int init();
+int read_super_block();
+int block_to_sector(DWORD block);
+int read_block(BYTE* data, DWORD block);
+int inode_block(DWORD inode);
+int inode_offset(DWORD inode);
+int read_inode(struct t2fs_inode *inode_data, DWORD inode);
+int record_data_ptr(DWORD record);
+int record_offset(DWORD record);
+int read_record(struct t2fs_record *dirent_data, struct t2fs_inode *inode, DWORD record);
+int find_record(struct t2fs_record *record_data, struct t2fs_inode *inode, char *record_name);
+int find_record_data_ptr(struct t2fs_record *record_data, DWORD *data_ptr, int data_size, char *record_name);
 
 /** user functions */
 int identify2 (char *name, int size);
