@@ -10,6 +10,7 @@ int init() {
 	_sectors_per_block_ = _super_block_.BlockSize / SECTOR_SIZE;
 	_inodes_per_block_ = _super_block_.BlockSize / _inode_size_;
 	_records_per_block_ = _super_block_.BlockSize / _record_size_;
+	_dwords_per_block_ = _super_block_.BlockSize / sizeof(DWORD);
 
 	_current_dir_inode_ = 0;
 	// other initializations go here
@@ -103,11 +104,15 @@ int read_record(struct t2fs_record *record_data, struct t2fs_inode *inode,
 	//TODO single and double indirections
 	return 0;
 }
+
 int find_record(struct t2fs_record *record_data, struct t2fs_inode *inode,
 		char *record_name) {
 	if (find_record_data_ptr(record_data, inode->dataPtr, 10, record_name) == 0)
 		return 0;
-	//TODO single and double indirections
+	if (find_record_single_ind(record_data, inode->singleIndPtr, record_name) == 0)
+		return 0;
+	if (find_record_double_ind(record_data, inode->doubleIndPtr, record_name) == 0)
+		return 0;
 	return -1;
 }
 
@@ -137,6 +142,32 @@ int find_record_in_array(struct t2fs_record *record_data,
 			memcpy(record_data, &(record_array[i]), _record_size_);
 			return 0;
 		}
+	}
+	return -1;
+}
+
+int find_record_single_ind(struct t2fs_record *record_data, DWORD block, char *record_name){
+	if(block == NULL_BLOCK)
+		return -1;
+	DWORD data_ptr[_dwords_per_block_];
+	read_block((BYTE*) data_ptr, block);
+	if(find_record_data_ptr(record_data, data_ptr, _dwords_per_block_, record_name) == 0)
+		return 0;
+	return -1;
+}
+
+int find_record_double_ind(struct t2fs_record *record_data, DWORD block,
+		char *record_name){
+	if(block == NULL_BLOCK)
+		return -1;
+	DWORD block_ptr[_dwords_per_block_];
+	read_block((BYTE*) block_ptr, block);
+	int i;
+	for(i = 0; i < _dwords_per_block_; i++){
+		if(block_ptr[i] == NULL_BLOCK)
+			return -1;
+		if(find_record_single_ind(record_data, block_ptr[i], record_name) == 0)
+			return 0;
 	}
 	return -1;
 }
@@ -254,4 +285,136 @@ int free_block(DWORD block) {
 	if (write_block(buff, block_map_block))
 		return -1;
 	return 0;
+}
+
+int append_record(DWORD inode_ptr, struct t2fs_record *record) {
+	struct t2fs_inode inode;
+	read_inode(&inode, inode_ptr);
+	struct t2fs_record r;
+	if (find_record(&r, &inode, record->name) >= 0)
+		return -1;
+	int i = 0;
+	for (i = 0; i < 10; i++) {
+		if (inode.dataPtr[i] == NULL_BLOCK) {
+			inode.dataPtr[i] = create_record_block(record);
+			write_inode(&inode, inode_ptr);
+			return 0;
+		}
+		if (append_record_block(inode.dataPtr[i], record) == 0)
+			return 0;
+	}
+	if (inode.singleIndPtr == NULL_BLOCK) {
+		DWORD block = create_record_block(record);
+		inode.singleIndPtr = create_single_ind_block(block);
+		write_inode(&inode, inode_ptr);
+		return 0;
+	}
+	if (append_record_single_ind(inode.singleIndPtr, record) == 0)
+		return 0;
+	if (inode.doubleIndPtr == NULL_BLOCK) {
+		DWORD block = create_record_block(record);
+		inode.doubleIndPtr = create_double_ind_block(block);
+		write_inode(&inode, inode_ptr);
+		return 0;
+	}
+	if (append_record_double_ind(inode.doubleIndPtr, record) == 0)
+		return 0;
+	return -1;
+}
+
+int append_record_block(DWORD block, struct t2fs_record *record) {
+	struct t2fs_record records[_records_per_block_];
+	read_block((BYTE*) records, block);
+	int i;
+	for (i = 0; i < _records_per_block_; i++) {
+		if (records[i].TypeVal == TYPEVAL_INVALIDO) {
+			memcpy(&(records[i]), record, _record_size_);
+			write_block((BYTE*) records, block);
+			return 0;
+		}
+	}
+	return -1;
+}
+
+int append_record_single_ind(DWORD block, struct t2fs_record *record) {
+	DWORD ptrs[_dwords_per_block_];
+	read_block((BYTE*) ptrs, block);
+	int i;
+	for (i = 0; i < _dwords_per_block_; i++) {
+		if (ptrs[i] == NULL_BLOCK) {
+			ptrs[i] = create_record_block(record);
+			write_block(ptrs, block);
+			return 0;
+		}
+		if (append_record_block(ptrs[i], record) == 0)
+			return 0;
+	}
+	return -1;
+}
+
+int append_record_double_ind(DWORD block, struct t2fs_record *record) {
+	DWORD ptrs[_dwords_per_block_];
+	read_block((BYTE*) ptrs, block);
+	int i;
+	for (i = 0; i < _dwords_per_block_; i++) {
+		if (ptrs[i] == NULL_BLOCK) {
+			DWORD block_ptr = create_record_block(record);
+			ptrs[i] = create_single_ind_block(block_ptr);
+			write_block(ptrs, block);
+			return 0;
+		}
+		if (append_record_block(ptrs[i], record) == 0)
+			return 0;
+	}
+	return -1;
+}
+
+DWORD create_record_block(struct t2fs_record *record) {
+	DWORD block = alloc_block();
+	if (block == NULL_BLOCK)
+		return NULL_BLOCK;
+	struct t2fs_record records[_records_per_block_];
+	memcpy(&(records[0]), record, _record_size_);
+	int i;
+	for (i = 1; i < _records_per_block_; i++) {
+		record_init(&(records[i]));
+	}
+	write_block((BYTE*) records, block);
+	return block;
+}
+
+DWORD create_single_ind_block(DWORD first_ptr) {
+	DWORD block = alloc_block();
+	if (block == NULL_BLOCK)
+		return NULL_BLOCK;
+	DWORD ptrs[_dwords_per_block_];
+	ptrs[0] = first_ptr;
+	int i;
+	for (i = 1; i < _dwords_per_block_; i++) {
+		ptrs[i] = NULL_BLOCK;
+	}
+	write_block((BYTE*) ptrs, block);
+	return block;
+}
+
+DWORD create_double_ind_block(DWORD first_ptr) {
+	DWORD block = alloc_block();
+	if (block == NULL_BLOCK)
+		return NULL_BLOCK;
+	DWORD ptrs[_dwords_per_block_];
+	ptrs[0] = create_single_ind_block(first_ptr);
+	int i;
+	for (i = 1; i < _dwords_per_block_; i++) {
+		ptrs[i] = NULL_BLOCK;
+	}
+	write_block((BYTE*) ptrs, block);
+	return block;
+}
+
+void record_init(struct t2fs_record *record) {
+	record->TypeVal = TYPEVAL_INVALIDO;
+	record->blocksFileSize = 0;
+	record->bytesFileSize = 0;
+	record->name[0] = '\0';
+	record->i_node = 0;
 }

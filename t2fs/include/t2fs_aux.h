@@ -16,6 +16,7 @@ int _inode_size_;
 int _record_size_;
 int _sectors_per_block_;
 int _inodes_per_block_;
+int _dwords_per_block_;
 int _records_per_block_;
 int _current_dir_inode_;
 
@@ -26,21 +27,34 @@ int block_to_sector(DWORD block);
 int read_block(BYTE* data, DWORD block);
 int inode_block(DWORD inode);
 int inode_offset(DWORD inode);
-int read_inode(struct t2fs_inode *inode_data, DWORD inode);
+
+void record_init(struct t2fs_record *record);
 int record_data_ptr(DWORD record);
 int record_offset(DWORD record);
-int read_record(struct t2fs_record *dirent_data, struct t2fs_inode *inode, DWORD record);
-int find_record(struct t2fs_record *record_data, struct t2fs_inode *inode, char *record_name);
-int find_record_data_ptr(struct t2fs_record *record_data, DWORD *data_ptr, int data_size, char *record_name);
+int read_record(struct t2fs_record *dirent_data, struct t2fs_inode *inode,
+		DWORD record);
+int append_record(DWORD inode_ptr, struct t2fs_record *record);
+
+int find_record(struct t2fs_record *record_data, struct t2fs_inode *inode,
+		char *record_name);
+int find_record_single_ind(struct t2fs_record *record_data, DWORD block,
+		char *record_name);
+int find_record_double_ind(struct t2fs_record *record_data, DWORD block,
+		char *record_name);
+int find_record_data_ptr(struct t2fs_record *record_data, DWORD *data_ptr,
+		int data_size, char *record_name);
 int find_record_in_array(struct t2fs_record *record_data,
 		struct t2fs_record* record_array, int array_size, char *record_name);
 
+int read_inode(struct t2fs_inode *inode_data, DWORD inode);
+int write_inode(struct t2fs_inode *inode_data, DWORD inode);
 void inode_init(struct t2fs_inode *inode);
-
-// grava o i-node no disco no primeiro lugar vazio
 DWORD alloc_inode();
-// marca como livre o i-node do endereço inode
 int free_inode(DWORD inode);
+
+DWORD create_record_block(struct t2fs_record *record);
+DWORD create_single_ind_block(DWORD first_ptr);
+DWORD create_double_ind_block(DWORD first_ptr);
 
 DWORD alloc_block();
 int free_block(DWORD block);
