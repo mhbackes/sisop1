@@ -150,7 +150,7 @@ void inode_init(struct t2fs_inode *inode) {
 	inode->doubleIndPtr = NULL_BLOCK;
 }
 
-DWORD alloc_inode(struct t2fs_inode *inode) {
+DWORD alloc_inode() {
 	DWORD i, j, inode_address = 0;
 	for (i = _super_block_.BitmapInodes; i < _super_block_.InodeBlock; i++) {
 		BYTE buff[_super_block_.BlockSize];
@@ -164,11 +164,10 @@ DWORD alloc_inode(struct t2fs_inode *inode) {
 			int k;
 			BYTE x = 1;
 			BYTE b = buff[j];
-			for (k = 0; k < 8; k++){
-				if(!(b & x)){
+			for (k = 0; k < 8; k++) {
+				if (!(b & x)) {
 					b = b | x;
 					buff[j] = b;
-					write_inode(inode, inode_address);
 					write_block(buff, i);
 					return inode_address;
 				}
@@ -181,25 +180,78 @@ DWORD alloc_inode(struct t2fs_inode *inode) {
 }
 
 int free_inode(DWORD inode) {
-	int inode_byte = (inode / 8) % _super_block_.BlockSize;
-	int inode_byte_off = inode % 8;
-	int inode_block = _super_block_.BitmapInodes + (inode / 8) / _super_block_.BlockSize;
+	int inode_map_byte = (inode / 8) % _super_block_.BlockSize;
+	int inode_map_byte_off = inode % 8;
+	int inode_map_block = _super_block_.BitmapInodes
+			+ (inode / 8) / _super_block_.BlockSize;
 	BYTE buff[_super_block_.BlockSize];
-	if(read_block(buff, inode_block))
+	if (read_block(buff, inode_map_block))
 		return -1;
-	BYTE b = buff[inode_byte];
+	BYTE b = buff[inode_map_byte];
 	BYTE x = 0;
 	int i;
-	for(i = 7; i >= 0; i--){
+	for (i = 7; i >= 0; i--) {
 		x = x << 1;
-		if(i != inode_byte_off){
+		if (i != inode_map_byte_off) {
 			x = x | 1;
 		}
 	}
 	b = x & b;
-	buff[inode_byte] = b;
-	if(write_block(buff, inode_block))
+	buff[inode_map_byte] = b;
+	if (write_block(buff, inode_map_block))
 		return -1;
 	return 0;
 }
 
+DWORD alloc_block() {
+	DWORD i, j, block_address = 0;
+	for (i = _super_block_.BitmapBlocks; i < _super_block_.BitmapInodes; i++) {
+		BYTE buff[_super_block_.BlockSize];
+		read_block(buff, i);
+		j = 0;
+		while (j < _super_block_.BlockSize && buff[j] == 0xFF) {
+			block_address += 8;
+			j++;
+		}
+		if (j < _super_block_.BlockSize) {
+			int k;
+			BYTE x = 1;
+			BYTE b = buff[j];
+			for (k = 0; k < 8; k++) {
+				if (!(b & x)) {
+					b = b | x;
+					buff[j] = b;
+					write_block(buff, i);
+					return block_address;
+				}
+				block_address++;
+				x = x << 1;
+			}
+		}
+	}
+	return NULL_BLOCK;
+}
+
+int free_block(DWORD block) {
+	int block_map_byte = (block / 8) % _super_block_.BlockSize;
+	int block_map_byte_off = block % 8;
+	int block_map_block = _super_block_.BitmapBlocks
+			+ (block / 8) / _super_block_.BlockSize;
+	BYTE buff[_super_block_.BlockSize];
+	if (read_block(buff, block_map_block))
+		return -1;
+	BYTE b = buff[block_map_byte];
+	BYTE x = 0;
+	int i;
+	for (i = 7; i >= 0; i--) {
+		x = x << 1;
+		if (i != block_map_byte_off) {
+			x = x | 1;
+		}
+	}
+	b = x & b;
+	buff[block_map_byte] = b;
+	if (write_block(buff, block_map_block))
+		return -1;
+	return 0;
+}
