@@ -39,6 +39,17 @@ int read_block(BYTE* data, DWORD block) {
 	return 0;
 }
 
+int write_block(BYTE* data, DWORD block) {
+	int i, sector = block_to_sector(block);
+	BYTE* data_aux = data;
+	for (i = 0; i < _sectors_per_block_; i++) {
+		if (write_sector(sector++, (char*) data_aux) != 0)
+			return -1;
+		data_aux += SECTOR_SIZE;
+	}
+	return 0;
+}
+
 int inode_block(DWORD inode) {
 	return _super_block_.InodeBlock + inode / _inodes_per_block_;
 }
@@ -55,6 +66,19 @@ int read_inode(struct t2fs_inode *inode_data, DWORD inode) {
 		return -1;
 	BYTE *inode_in_buffer = buff + inode_off * _inode_size_;
 	memcpy(inode_data, inode_in_buffer, _inode_size_);
+	return 0;
+}
+
+int write_inode(struct t2fs_inode *inode_data, DWORD inode) {
+	BYTE buff[_super_block_.BlockSize];
+	DWORD inode_blk = inode_block(inode);
+	DWORD inode_off = inode_offset(inode);
+	if (read_block(buff, inode_blk) != 0)
+		return -1;
+	BYTE *inode_in_buffer = buff + inode_off * _inode_size_;
+	memcpy(inode_in_buffer, inode_data, _inode_size_);
+	if (write_block(buff, inode_blk) != 0)
+		return -1;
 	return 0;
 }
 
@@ -115,5 +139,67 @@ int find_record_in_array(struct t2fs_record *record_data,
 		}
 	}
 	return -1;
+}
+
+void inode_init(struct t2fs_inode *inode) {
+	int i;
+	for (i = 0; i < 10; i++) {
+		inode->dataPtr[i] = NULL_BLOCK;
+	}
+	inode->singleIndPtr = NULL_BLOCK;
+	inode->doubleIndPtr = NULL_BLOCK;
+}
+
+DWORD alloc_inode(struct t2fs_inode *inode) {
+	DWORD i, j, inode_address = 0;
+	for (i = _super_block_.BitmapInodes; i < _super_block_.InodeBlock; i++) {
+		BYTE buff[_super_block_.BlockSize];
+		read_block(buff, i);
+		j = 0;
+		while (j < _super_block_.BlockSize && buff[j] == 0xFF) {
+			inode_address += 8;
+			j++;
+		}
+		if (j < _super_block_.BlockSize) {
+			int k;
+			BYTE x = 1;
+			BYTE b = buff[j];
+			for (k = 0; k < 8; k++){
+				if(!(b & x)){
+					b = b | x;
+					buff[j] = b;
+					write_inode(inode, inode_address);
+					write_block(buff, i);
+					return inode_address;
+				}
+				inode_address++;
+				x = x << 1;
+			}
+		}
+	}
+	return NULL_BLOCK;
+}
+
+int free_inode(DWORD inode) {
+	int inode_byte = (inode / 8) % _super_block_.BlockSize;
+	int inode_byte_off = inode % 8;
+	int inode_block = _super_block_.BitmapInodes + (inode / 8) / _super_block_.BlockSize;
+	BYTE buff[_super_block_.BlockSize];
+	if(read_block(buff, inode_block))
+		return -1;
+	BYTE b = buff[inode_byte];
+	BYTE x = 0;
+	int i;
+	for(i = 7; i >= 0; i--){
+		x = x << 1;
+		if(i != inode_byte_off){
+			x = x | 1;
+		}
+	}
+	b = x & b;
+	buff[inode_byte] = b;
+	if(write_block(buff, inode_block))
+		return -1;
+	return 0;
 }
 

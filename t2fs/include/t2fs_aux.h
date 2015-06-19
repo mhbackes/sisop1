@@ -35,4 +35,11 @@ int find_record_data_ptr(struct t2fs_record *record_data, DWORD *data_ptr, int d
 int find_record_in_array(struct t2fs_record *record_data,
 		struct t2fs_record* record_array, int array_size, char *record_name);
 
+void inode_init(struct t2fs_inode *inode);
+
+// grava o i-node no disco no primeiro lugar vazio
+DWORD alloc_inode(struct t2fs_inode *inode);
+// marca como livre o i-node do endereço inode
+int free_inode(DWORD inode);
+
 #endif /* T2FS_AUX_H_ */
