@@ -54,30 +54,6 @@ typedef struct {
     unsigned long fileSize;
 } DIRENT2;
 
-/** global variables */
-#define NULL_BLOCK 0x0FFFFFFFF
-struct t2fs_superbloco _super_block_;
-int _inode_size_;
-int _record_size_;
-int _sectors_per_block_;
-int _inodes_per_block_;
-int _records_per_block_;
-int _current_dir_inode_;
-
-/** internal functions */
-int init();
-int read_super_block();
-int block_to_sector(DWORD block);
-int read_block(BYTE* data, DWORD block);
-int inode_block(DWORD inode);
-int inode_offset(DWORD inode);
-int read_inode(struct t2fs_inode *inode_data, DWORD inode);
-int record_data_ptr(DWORD record);
-int record_offset(DWORD record);
-int read_record(struct t2fs_record *dirent_data, struct t2fs_inode *inode, DWORD record);
-int find_record(struct t2fs_record *record_data, struct t2fs_inode *inode, char *record_name);
-int find_record_data_ptr(struct t2fs_record *record_data, DWORD *data_ptr, int data_size, char *record_name);
-
 /** user functions */
 int identify2 (char *name, int size);
 
