@@ -105,13 +105,16 @@ int read_record(struct t2fs_record *record_data, struct t2fs_inode *inode,
 	return 0;
 }
 
-int find_record(struct t2fs_record *record_data, struct t2fs_inode *inode,
-		char *record_name) {
-	if (find_record_data_ptr(record_data, inode->dataPtr, 10, record_name) == 0)
+int find_record(struct t2fs_record *record_data, DWORD inode, char *record_name) {
+	struct t2fs_inode inode_data;
+	read_inode(&inode_data, inode);
+	if (find_record_data_ptr(record_data, inode_data.dataPtr, 10, record_name) == 0)
 		return 0;
-	if (find_record_single_ind(record_data, inode->singleIndPtr, record_name) == 0)
+	if (find_record_single_ind(record_data, inode_data.singleIndPtr, record_name)
+			== 0)
 		return 0;
-	if (find_record_double_ind(record_data, inode->doubleIndPtr, record_name) == 0)
+	if (find_record_double_ind(record_data, inode_data.doubleIndPtr, record_name)
+			== 0)
 		return 0;
 	return -1;
 }
@@ -146,27 +149,29 @@ int find_record_in_array(struct t2fs_record *record_data,
 	return -1;
 }
 
-int find_record_single_ind(struct t2fs_record *record_data, DWORD block, char *record_name){
-	if(block == NULL_BLOCK)
+int find_record_single_ind(struct t2fs_record *record_data, DWORD block,
+		char *record_name) {
+	if (block == NULL_BLOCK)
 		return -1;
 	DWORD data_ptr[_dwords_per_block_];
 	read_block((BYTE*) data_ptr, block);
-	if(find_record_data_ptr(record_data, data_ptr, _dwords_per_block_, record_name) == 0)
+	if (find_record_data_ptr(record_data, data_ptr, _dwords_per_block_,
+			record_name) == 0)
 		return 0;
 	return -1;
 }
 
 int find_record_double_ind(struct t2fs_record *record_data, DWORD block,
-		char *record_name){
-	if(block == NULL_BLOCK)
+		char *record_name) {
+	if (block == NULL_BLOCK)
 		return -1;
 	DWORD block_ptr[_dwords_per_block_];
 	read_block((BYTE*) block_ptr, block);
 	int i;
-	for(i = 0; i < _dwords_per_block_; i++){
-		if(block_ptr[i] == NULL_BLOCK)
+	for (i = 0; i < _dwords_per_block_; i++) {
+		if (block_ptr[i] == NULL_BLOCK)
 			return -1;
-		if(find_record_single_ind(record_data, block_ptr[i], record_name) == 0)
+		if (find_record_single_ind(record_data, block_ptr[i], record_name) == 0)
 			return 0;
 	}
 	return -1;
@@ -291,7 +296,7 @@ int append_record(DWORD inode_ptr, struct t2fs_record *record) {
 	struct t2fs_inode inode;
 	read_inode(&inode, inode_ptr);
 	struct t2fs_record r;
-	if (find_record(&r, &inode, record->name) >= 0)
+	if (find_record(&r, inode_ptr, record->name) >= 0)
 		return -1;
 	int i = 0;
 	for (i = 0; i < 10; i++) {
@@ -343,7 +348,7 @@ int append_record_single_ind(DWORD block, struct t2fs_record *record) {
 	for (i = 0; i < _dwords_per_block_; i++) {
 		if (ptrs[i] == NULL_BLOCK) {
 			ptrs[i] = create_record_block(record);
-			write_block(ptrs, block);
+			write_block((BYTE*) ptrs, block);
 			return 0;
 		}
 		if (append_record_block(ptrs[i], record) == 0)
@@ -360,7 +365,7 @@ int append_record_double_ind(DWORD block, struct t2fs_record *record) {
 		if (ptrs[i] == NULL_BLOCK) {
 			DWORD block_ptr = create_record_block(record);
 			ptrs[i] = create_single_ind_block(block_ptr);
-			write_block(ptrs, block);
+			write_block((BYTE*) ptrs, block);
 			return 0;
 		}
 		if (append_record_block(ptrs[i], record) == 0)
@@ -417,4 +422,65 @@ void record_init(struct t2fs_record *record) {
 	record->bytesFileSize = 0;
 	record->name[0] = '\0';
 	record->i_node = 0;
+}
+
+DWORD find_dir_inode(DWORD curr_inode_ptr, char *path) {
+	char* first_bar = strchr(path, '/');
+	char* next_path = strtok(path, "/") + strlen(path) + 1;
+	struct t2fs_inode curr_inode;
+	read_inode(&curr_inode, curr_inode_ptr);
+	struct t2fs_record record;
+	if (find_record(&record, curr_inode_ptr, path) == -1)
+		return NULL_BLOCK;
+	if (record.TypeVal != TYPEVAL_DIRETORIO)
+		return NULL_BLOCK;
+	if (first_bar == NULL)
+		return record.i_node;
+	return find_dir_inode(record.i_node, next_path);
+}
+
+int last_occurrence(char* str, int ch) {
+	char* pch = strchr(str, ch);
+	char* last_occ = str;
+	while (pch != NULL) {
+		last_occ = pch;
+		pch = strchr(pch + 1, ch);
+	}
+	return last_occ - str;
+}
+
+int create_dir(DWORD parent_inode, char *dir_name) {
+	if (dir_name[0] == '\0')
+		return -1;
+	struct t2fs_record child_dir, dot, dotdot;
+	if (find_record(&child_dir, parent_inode, dir_name) >= 0)
+		return -1;
+
+	DWORD child_inode = alloc_inode();
+	if (child_inode == NULL_BLOCK)
+		return -1;
+	struct t2fs_inode child_inode_data;
+	inode_init(&child_inode_data);
+	write_inode(&child_inode_data, child_inode);
+
+	record_init(&child_dir);
+	child_dir.TypeVal = TYPEVAL_DIRETORIO;
+	strcpy(child_dir.name, dir_name);
+	child_dir.i_node = child_inode;
+
+	record_init(&dot);
+	dot.TypeVal = TYPEVAL_DIRETORIO;
+	strcpy(dot.name, ".");
+	dot.i_node = child_inode;
+
+	record_init(&dotdot);
+	dotdot.TypeVal = TYPEVAL_DIRETORIO;
+	strcpy(dotdot.name, "..");
+	dotdot.i_node = parent_inode;
+
+	if (append_record(parent_inode, &child_dir) != 0)
+		return -1;
+	if (append_record(child_inode, &dot) != 0)
+		return -1;
+	return append_record(child_inode, &dotdot);
 }
