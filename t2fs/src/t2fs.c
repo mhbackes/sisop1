@@ -5,7 +5,7 @@
 
 int identify2(char *name, int size) {
 	strncpy(name,
-			"Luis Pedro Silvestrin 228528, Marcos Henrique Backes 228483, Thiago xxxxxxxx xxxxxxxx",
+			"Luis Pedro Silvestrin 228528, Marcos Henrique Backes 228483, Thiago Bell Felix de Oliveira 228527",
 			size);
 	name[size - 1] = '\0';
 	return 0;
