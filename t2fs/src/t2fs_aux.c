@@ -13,6 +13,7 @@ int init() {
 	_records_per_block_ = _super_block_.BlockSize / _record_size_;
 	_current_dir_inode_ = 0;
 	// other initializations go here
+	_initialized_ = 1;
 	return 0;
 }
 
@@ -567,7 +568,8 @@ int last_occurrence(char* str, int ch) {
 		last_occ = pch;
 		pch = strchr(pch + 1, ch);
 	}
-	return last_occ - str;
+	int result = last_occ - str;
+	return result;
 }
 
 int create_dir(DWORD parent_inode, char *dir_name) {
@@ -585,8 +587,10 @@ int create_dir(DWORD parent_inode, char *dir_name) {
 	write_inode(&child_inode_data, child_inode);
 
 	record_init(&child_dir);
+
 	child_dir.TypeVal = TYPEVAL_DIRETORIO;
-	strcpy(child_dir.name, dir_name);
+	strncpy(child_dir.name, dir_name, 30);
+	child_dir.name[31] = '\0';
 	child_dir.i_node = child_inode;
 
 	record_init(&dot);
