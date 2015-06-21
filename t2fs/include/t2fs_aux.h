@@ -8,6 +8,8 @@
 #ifndef __T2FS_AUX__
 #define __T2FS_AUX__
 
+#include "t2fs.h"
+
 #define NULL_BLOCK 0x0FFFFFFFF
 
 /** global variables */

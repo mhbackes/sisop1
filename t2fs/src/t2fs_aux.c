@@ -1,5 +1,4 @@
 #include "../include/t2fs_aux.h"
-#include "../include/t2fs.h"
 #include "../include/apidisk.h"
 #include <string.h>
 

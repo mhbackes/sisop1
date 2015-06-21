@@ -1,6 +1,5 @@
 #include "../include/t2fs.h"
 #include "../include/t2fs_aux.h"
-#include "../include/apidisk.h"
 #include <string.h>
 
 char _cwd_[1024] = "/";
@@ -14,18 +13,32 @@ int identify2(char *name, int size) {
 }
 
 FILE2 create2(char *filename) {
+	if (!_initialized_)
+			init();
 }
 int delete2(char *filename) {
+	if (!_initialized_)
+			init();
 }
 FILE2 open2(char *filename) {
+	if (!_initialized_)
+			init();
 }
 int close2(FILE2 handle) {
+	if (!_initialized_)
+			init();
 }
 int read2(FILE2 handle, char *buffer, int size) {
+	if (!_initialized_)
+			init();
 }
 int write2(FILE2 handle, char *buffer, int size) {
+	if (!_initialized_)
+			init();
 }
 int seek2(FILE2 handle, unsigned int offset) {
+	if (!_initialized_)
+			init();
 }
 
 int mkdir2(char *pathname) {
@@ -60,9 +73,18 @@ int mkdir2(char *pathname) {
 	return create_dir(parent_inode, file_name);
 }
 
-DIR2 opendir2(char *pathname){}
-int readdir2(DIR2 handle, DIRENT2 *dentry){}
-int closedir2(DIR2 handle){}
+DIR2 opendir2(char *pathname) {
+	if (!_initialized_)
+			init();
+}
+int readdir2(DIR2 handle, DIRENT2 *dentry) {
+	if (!_initialized_)
+			init();
+}
+int closedir2(DIR2 handle) {
+	if (!_initialized_)
+			init();
+}
 
 int rmdir2(char *pathname) {
 	if (!_initialized_)
@@ -111,6 +133,7 @@ int chdir2(char *pathname) {
 		curr_inode = 0;
 		path = pathname_cpy + 1;
 	} else {
+#include "../include/t2fs.h"
 		curr_inode = _current_dir_inode_;
 		path = pathname_cpy;
 	}
@@ -138,6 +161,8 @@ int chdir2(char *pathname) {
 }
 
 int getcwd2(char *pathname, int size) {
+	if (!_initialized_)
+		init();
 	strncpy(pathname, _cwd_, size);
 	pathname[size - 1] = '\0';
 	if (size < strlen(_cwd_))
