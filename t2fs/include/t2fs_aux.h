@@ -37,8 +37,12 @@ int record_offset(DWORD record);
 int read_record(struct t2fs_record *record_data, DWORD inode, int position);
 int write_record(struct t2fs_record *record_data, DWORD inode, int position);
 int append_record(DWORD inode_ptr, struct t2fs_record *record);
+int append_record_block(DWORD block, struct t2fs_record *record);
+int append_record_single_ind(DWORD block, struct t2fs_record *record, DWORD inode);
+int append_record_double_ind(DWORD block, struct t2fs_record *record, DWORD inode);
 int remove_record(DWORD inode, int position);
-void add_size(DWORD inode, DWORD bytes);
+void add_size_bytes(DWORD inode, DWORD bytes);
+void add_size_blocks(DWORD inode, DWORD blocks);
 
 int find_record(struct t2fs_record *record_data, DWORD inode,
 		char *record_name);
@@ -56,7 +60,8 @@ int last_record_pos(DWORD inode);
 DWORD find_dir_inode(DWORD curr_inode_ptr, char *path);
 int dir_is_empty(DWORD inode);
 
-DWORD inode_size(DWORD inode);
+DWORD inode_size_bytes(DWORD inode);
+DWORD inode_size_blocks(DWORD inode);
 int read_inode(struct t2fs_inode *inode_data, DWORD inode);
 int write_inode(struct t2fs_inode *inode_data, DWORD inode);
 void inode_init(struct t2fs_inode *inode);

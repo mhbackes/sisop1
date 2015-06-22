@@ -129,7 +129,7 @@ int readdir2(DIR2 handle, DIRENT2 *dentry) {
 	struct t2fs_record record;
 	if(read_record(&record, inode, entry) != 0)
 		return -1;
-	dentry->fileSize = record.bytesFileSize;
+	dentry->fileSize = inode_size_blocks(record.i_node) * _super_block_.BlockSize;
 	switch(record.TypeVal){
 	case TYPEVAL_DIRETORIO:
 		dentry->fileType = 1;
@@ -203,7 +203,6 @@ int chdir2(char *pathname) {
 		curr_inode = 0;
 		path = pathname_cpy + 1;
 	} else {
-#include "../include/t2fs.h"
 		curr_inode = _current_dir_inode_;
 		path = pathname_cpy;
 	}
