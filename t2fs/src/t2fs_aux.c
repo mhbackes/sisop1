@@ -103,6 +103,9 @@ int record_offset(DWORD dirent) {
 }
 
 int read_record(struct t2fs_record *record_data, DWORD inode, int position) {
+	int size = inode_size(inode) / _record_size_;
+	if(position >= size)
+		return -1;
 	DWORD record_ptr = record_data_ptr(position);
 	DWORD record_off = record_offset(position);
 	struct t2fs_inode inode_data;
@@ -546,6 +549,8 @@ void record_init(struct t2fs_record *record) {
 }
 
 DWORD find_dir_inode(DWORD curr_inode_ptr, char *path) {
+	if(path[0] == '\0')
+		return curr_inode_ptr;
 	char* first_bar = strchr(path, '/');
 	char* next_path = strtok(path, "/") + strlen(path) + 1;
 	struct t2fs_inode curr_inode;

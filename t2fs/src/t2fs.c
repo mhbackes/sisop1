@@ -2,7 +2,17 @@
 #include "../include/t2fs_aux.h"
 #include <string.h>
 
-char _cwd_[1024] = "/";
+#define MAX_CWD 1024
+char _cwd_[MAX_CWD] = "/";
+
+#define MAX_DIR 20
+typedef struct t2fs_dir_data {
+	int busy;
+	int curr_entry;
+	DWORD inode;
+} DIR_DATA;
+
+DIR_DATA _opened_dir_[MAX_DIR];
 
 int identify2(char *name, int size) {
 	strncpy(name,
@@ -14,31 +24,37 @@ int identify2(char *name, int size) {
 
 FILE2 create2(char *filename) {
 	if (!_initialized_)
-			init();
+		init();
+	return -1;
 }
 int delete2(char *filename) {
 	if (!_initialized_)
-			init();
+		init();
+	return -1;
 }
 FILE2 open2(char *filename) {
 	if (!_initialized_)
-			init();
+		init();
+	return -1;
 }
 int close2(FILE2 handle) {
 	if (!_initialized_)
-			init();
+		init();
 }
 int read2(FILE2 handle, char *buffer, int size) {
 	if (!_initialized_)
-			init();
+		init();
+	return -1;
 }
 int write2(FILE2 handle, char *buffer, int size) {
 	if (!_initialized_)
-			init();
+		init();
+	return -1;
 }
 int seek2(FILE2 handle, unsigned int offset) {
 	if (!_initialized_)
-			init();
+		init();
+	return -1;
 }
 
 int mkdir2(char *pathname) {
@@ -75,15 +91,69 @@ int mkdir2(char *pathname) {
 
 DIR2 opendir2(char *pathname) {
 	if (!_initialized_)
-			init();
+		init();
+	char cpypathname[strlen(pathname) + 1], *path;
+	strcpy(cpypathname, pathname);
+	int curr_inode, dir_inode;
+	if (cpypathname[0] == '/') {
+		curr_inode = 0;
+		path = cpypathname + 1;
+	} else {
+		curr_inode = _current_dir_inode_;
+		path = cpypathname;
+	}
+	dir_inode = find_dir_inode(curr_inode, path);
+	if(dir_inode == NULL_BLOCK)
+		return -1;
+	int i;
+	for (i = 0; i < MAX_DIR; i++) {
+		if (!_opened_dir_[i].busy) {
+			_opened_dir_[i].inode = dir_inode;
+			_opened_dir_[i].busy = 1;
+			_opened_dir_[i].curr_entry = 0;
+			return (DIR2) i;
+		}
+	}
+	return -1;
 }
+
 int readdir2(DIR2 handle, DIRENT2 *dentry) {
 	if (!_initialized_)
-			init();
+		init();
+	if (handle < 0 || handle >= MAX_DIR)
+		return -1;
+	if (!_opened_dir_[handle].busy)
+		return -1;
+	DWORD inode = _opened_dir_[handle].inode;
+	int entry = _opened_dir_[handle].curr_entry;
+	struct t2fs_record record;
+	if(read_record(&record, inode, entry) != 0)
+		return -1;
+	dentry->fileSize = record.bytesFileSize;
+	switch(record.TypeVal){
+	case TYPEVAL_DIRETORIO:
+		dentry->fileType = 1;
+		break;
+	case TYPEVAL_REGULAR:
+		dentry->fileType = 0;
+		break;
+	default:
+		return -1;
+	}
+	strcpy(dentry->name, record.name);
+	_opened_dir_[handle].curr_entry++;
+	return 0;
 }
+
 int closedir2(DIR2 handle) {
 	if (!_initialized_)
-			init();
+		init();
+	if (handle < 0 || handle >= MAX_DIR)
+		return -1;
+	if (!_opened_dir_[handle].busy)
+		return -1;
+	_opened_dir_[handle].busy = 0;
+	return 0;
 }
 
 int rmdir2(char *pathname) {
@@ -123,7 +193,7 @@ int chdir2(char *pathname) {
 		init();
 	if (pathname == NULL || pathname[0] == '\0')
 		return -1;
-	char cwd_cpy[1024];
+	char cwd_cpy[MAX_CWD];
 	strcpy(cwd_cpy, _cwd_);
 	char pathname_cpy[strlen(pathname) + 1];
 	strcpy(pathname_cpy, pathname);
@@ -150,8 +220,8 @@ int chdir2(char *pathname) {
 				strcpy(cwd_cpy, "/");
 		} else if (strcmp(path, ".") != 0) {
 			if (strcmp(cwd_cpy, "/") != 0)
-				strncat(cwd_cpy, "/", 1024);
-			strncat(cwd_cpy, path, 1024);
+				strncat(cwd_cpy, "/", MAX_CWD);
+			strncat(cwd_cpy, path, MAX_CWD);
 		}
 		path = next_path;
 	} while (first_bar != NULL);
