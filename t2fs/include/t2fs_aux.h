@@ -65,6 +65,9 @@ int record_block(DWORD record);
 int record_offset(DWORD record);
 int read_record(struct t2fs_record *record_data, DWORD inode, int position);
 int write_record(struct t2fs_record *record_data, DWORD inode, int position);
+
+
+/*adiciona registro a um diretório*/
 int append_record(DWORD inode_ptr, struct t2fs_record *record); //create2 <- usar essa função para criar arquivo
 int append_record_block(DWORD block, struct t2fs_record *record);
 int append_record_single_ind(DWORD block, struct t2fs_record *record, DWORD inode);

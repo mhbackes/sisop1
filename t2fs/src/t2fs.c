@@ -5,14 +5,27 @@
 #define MAX_CWD 1024
 char _cwd_[MAX_CWD] = "/";
 
+#define NULL_BLOCK 0x0FFFFFFFF
+
+/*opened directories handles*/
 #define MAX_DIR 20
 typedef struct t2fs_dir_data {
-	int busy;
+	int busy; //indicates if this entry in being used
 	int curr_entry;
 	DWORD inode;
 } DIR_DATA;
 
 DIR_DATA _opened_dir_[MAX_DIR];
+
+/*opened files handles*/
+#define MAX_FILE 20
+typedef struct t2fs_file_data {
+	int busy;//indicates if this entry in being used
+	int curr_pointer;
+	DWORD inode;
+} FILE_DATA;
+
+FILE_DATA _opened_file_[MAX_FILE];
 
 int identify2(char *name, int size) {
 	strncpy(name,
@@ -25,8 +38,74 @@ int identify2(char *name, int size) {
 FILE2 create2(char *filename) {
 	if (!_initialized_)
 		init();
-	return -1;
+	printf("hi_firs");
+	char *c;
+	c = filename;
+	int namesize = 0;
+	//checks if filename is valid
+	while(*c!='\0'){
+		namesize++;
+		if(*c<33 || *c>122 || namesize > 30){
+			printf("hi2 %c size:%d", *c,namesize);
+			return -1;
+		}
+		c++;
+	}
+	struct t2fs_record record;
+	
+	//pega inode do diretorio atual
+	DWORD parent_inode_addr;
+	parent_inode_addr = find_dir_inode(0, _cwd_);
+	
+	
+	//checks if file already exists
+	
+	if(find_record(&record, parent_inode_addr, filename)!=-1){
+		//arquivo já existe
+		return -1;
+	}
+	
+	printf("hi");
+	
+	FILE2 handle = get_empty_file_handle();
+	
+	if(handle == -1){
+		//no space in memory structure
+		return -1;
+	}
+	
+	record.TypeVal = 0x01; //arquivo
+	strncpy(record.name, filename, namesize+1);
+	record.blocksFileSize = 0;
+	record.bytesFileSize = 0;
+	//creates inode for file
+	DWORD file_inode_addr = alloc_inode();
+	record.i_node = file_inode_addr;
+	append_record(parent_inode_addr, &record);
+	
+	struct t2fs_inode file_inode;
+	inode_init(&file_inode); 
+	write_inode(&file_inode, file_inode_addr);
+	
+	_opened_file_[handle].busy = 1;
+	_opened_file_[handle].curr_pointer = 0;
+	_opened_file_[handle].inode = file_inode_addr;
+	
+	return handle;
 }
+
+//return an valid empty file handle. If none is free, returns -1
+FILE2 get_empty_file_handle(){
+	int ind;
+	while(ind<MAX_FILE) {
+		if(_opened_file_[ind].busy==0){
+			return ind;
+		}
+		ind++;
+	}
+	return -1;	
+}
+
 int delete2(char *filename) {
 	if (!_initialized_)
 		init();
