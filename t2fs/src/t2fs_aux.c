@@ -503,6 +503,8 @@ int append_record(DWORD inode_ptr, struct t2fs_record *record) {
 	return -1;
 }
 
+// lê o último registro, escreve um registro vazio no último
+// e escreve o último registro por cima do que é pra ser removido
 int remove_record(DWORD inode, int position) {
 	int last_record_pos = inode_size_bytes(inode) / _record_size_ - 1;
 	struct t2fs_record empty_record, last_record;
@@ -623,6 +625,9 @@ void record_init(struct t2fs_record *record) {
 	record->i_node = 0;
 }
 
+// retorna o inode correspondente ao curr_inode_ptr + path
+// observação: path deve ser relativo (não pode começar com '/')
+// para caminhos absolutos usar curr_inode_ptr = 0 e remover o '/' do início do path
 DWORD find_dir_inode(DWORD curr_inode_ptr, char *path) {
 	if (path[0] == '\0')
 		return curr_inode_ptr;
