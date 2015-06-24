@@ -16,7 +16,7 @@ BIN_DIR=./bin
 SRC_DIR=./src
 TST_DIR=./teste
 
-all:
+all: t2fs.a
 
 test: test.o t2fs.a
 	$(CC) -o $(BIN_DIR)/test $(BIN_DIR)/test.o -L$(LIB_DIR) -lt2fs -Wall -m32
