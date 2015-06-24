@@ -114,6 +114,14 @@ int delete2(char *filename) {
 FILE2 open2(char *filename) {
 	if (!_initialized_)
 		init();
+	DIRENT2 entry;
+	DIR2 curr_dir_handle = opendir2(_cwd_);
+	
+	
+	while(readdir2(curr_dir_handle, &entry)) {
+		if(strentry.)
+	}
+	
 	return -1;
 }
 int close2(FILE2 handle) {
