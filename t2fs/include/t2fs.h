@@ -12,8 +12,6 @@
 typedef int FILE2;
 typedef int DIR2;
 
-int _initialized_;
-
 typedef unsigned char BYTE;
 typedef unsigned short int WORD;
 typedef unsigned int DWORD;
