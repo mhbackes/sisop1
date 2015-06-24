@@ -460,6 +460,62 @@ void add_size_blocks(DWORD inode, DWORD blocks) {
 	write_record(&dot_record, inode, pos);
 }
 
+//return address of logic block of file
+DWORD get_file_logic_block_addr(DWORD inode_ptr, DWORD logical_block){
+	struct t2fs_inode file_inode;
+	read_inode(&file_inode,inode_ptr);
+	DWORD data_block_ptr, lvl1_ptr, lvl2_ptr,offset;
+	//if sector is one of the 10 first on file
+	if(logical_block>=0&&logical_block<10) {
+		data_block_ptr = file_inode.dataPtr[logical_block];
+	}
+	//single indirection  _dwords_per_block_ 
+	else if (logical_block >= 10 && logical_block < _dwords_per_block_+10) {
+		lvl1_ptr = file_inode.singleIndPtr;
+		offset = logical_block - 10;
+		BYTE buff[_super_block_.BlockSize];
+		if (read_block(buff, lvl1_ptr) != 0)
+			return -1;
+		data_block_ptr = buff + offset*sizeof(DWORD);
+	} else {
+	    //double indirection
+	    DWORD offset_double_indirection = logical_block-_dwords_per_block_-10;
+	    if (offset_double_indirection>=0 && offset_double_indirection< _dwords_per_block_*_dwords_per_block_ ) {
+		lvl1_ptr = file_inode.doubleIndPtr;
+		BYTE buff[_super_block_.BlockSize];
+		if (read_block(buff, lvl1_ptr) != 0)
+			return -1;
+		offset = offset_double_indirection / _dwords_per_block_;
+		lvl2_ptr = buff + offset*sizeof(DWORD);
+		
+		BYTE buff2[_super_block_.BlockSize];
+		if (read_block(buff2, lvl2_ptr) != 0)
+			return -1;
+		
+		offset = offset_double_indirection % _dwords_per_block_;
+		data_block_ptr = buff + offset*sizeof(DWORD);
+	    } else {
+		return -1;
+	    }
+	}
+	return data_block_ptr;
+}
+
+int write_file_block(DWORD inode_ptr, DWORD logical_block, BYTE *data){
+	DWORD block_addr = get_file_logic_block_addr(inode_ptr,logical_block);
+	//reads data block
+	return write_block(data,block_addr);
+}
+int read_file_block(DWORD inode_ptr, DWORD logical_block, BYTE *data, int size){
+	DWORD block_addr = get_file_logic_block_addr(inode_ptr,logical_block);
+	//reads data block
+	BYTE data_buff[_super_block_.BlockSize];
+	if (read_block(data_buff, block_addr) != 0)
+		return -1;
+	strncpy(data, data_buff, size);
+	return 0; 
+}
+
 int append_record(DWORD inode_ptr, struct t2fs_record *record) {
 	struct t2fs_inode inode;
 	read_inode(&inode, inode_ptr);

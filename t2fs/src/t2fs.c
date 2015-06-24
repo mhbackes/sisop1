@@ -23,8 +23,9 @@ DIR_DATA _opened_dir_[MAX_DIR];
 #define MAX_FILE 20
 typedef struct t2fs_file_data {
 	int busy;//indicates if this entry in being used
-	int curr_pointer;
+	DWORD curr_pointer;
 	DWORD inode;
+	DWORD parent_inode;
 } FILE_DATA;
 
 FILE_DATA _opened_file_[MAX_FILE];
@@ -90,6 +91,7 @@ FILE2 create2(char *filename) {
 	_opened_file_[handle].busy = 1;
 	_opened_file_[handle].curr_pointer = 0;
 	_opened_file_[handle].inode = file_inode_addr;
+	_opened_file_[handle].parent_inode = parent_inode_addr;
 	
 	return handle;
 }
@@ -149,6 +151,14 @@ int close2(FILE2 handle) {
 int read2(FILE2 handle, char *buffer, int size) {
 	if (!_initialized_)
 		init();
+	
+	//checks if handle is valid
+	if(_opened_file_[handle].busy!=1){
+		return -1;
+	}
+	
+	DWORD num_blocks = (size / _super_block_.BlockSize)+1;
+	
 	
 	return -1;
 }

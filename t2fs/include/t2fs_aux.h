@@ -67,6 +67,11 @@ int read_record(struct t2fs_record *record_data, DWORD inode, int position);
 int write_record(struct t2fs_record *record_data, DWORD inode, int position);
 
 
+//IO de dados de arquivos
+//retorna -1 em caso de erro
+
+int write_file_block(DWORD inode_ptr, DWORD logical_block, BYTE *data);
+int read_file_block(DWORD inode_ptr, DWORD logical_block, BYTE *data,int size);
 /*adiciona registro a um diretório*/
 int append_record(DWORD inode_ptr, struct t2fs_record *record); //create2 <- usar essa função para criar arquivo
 int append_record_block(DWORD block, struct t2fs_record *record);
@@ -87,6 +92,8 @@ DWORD find_dir_inode(DWORD curr_inode_ptr, char *path); //create2 <- usar essa f
 int dir_is_empty(DWORD inode);
 int create_dir(DWORD parent_inode, char *file_name);
 int remove_dir(DWORD parent_inode, char *file_name);
+
+
 
 // util string
 int last_occurrence(char* str, int ch);
