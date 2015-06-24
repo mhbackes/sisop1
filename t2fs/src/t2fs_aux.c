@@ -2,6 +2,7 @@
 #include "../include/apidisk.h"
 #include <string.h>
 
+
 int init() {
 	read_super_block();
 	_inode_size_ = sizeof(struct t2fs_inode);
@@ -13,6 +14,8 @@ int init() {
 	_current_dir_inode_ = 0;
 	// other initializations go here
 	_initialized_ = 1;
+	
+	printf("block size size %d",_super_block_.BlockSize);
 	return 0;
 }
 
