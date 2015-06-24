@@ -13,7 +13,7 @@
 #define NULL_BLOCK 0x0FFFFFFFF
 
 /** global variables */
-
+int _initialized_;
 struct t2fs_superbloco _super_block_;
 int _inode_size_;
 int _record_size_;

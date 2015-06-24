@@ -1,8 +1,7 @@
 #include "../include/t2fs_aux.h"
 #include "../include/apidisk.h"
 #include <string.h>
-
-
+int _initialized_=0;
 int init() {
 	read_super_block();
 	_inode_size_ = sizeof(struct t2fs_inode);

@@ -2,7 +2,7 @@
 #include "../include/t2fs_aux.h"
 #include <string.h>
 
-_initialized_=0;
+
 
 #define MAX_CWD 1024
 char _cwd_[MAX_CWD] = "/";
