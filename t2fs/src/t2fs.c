@@ -41,7 +41,7 @@ int identify2(char *name, int size) {
 
 FILE2 create2(char *filename) {
 	if (!_initialized_){
-		init();
+		init();		
 	}
 	char *c;
 	c = filename;
@@ -51,6 +51,7 @@ FILE2 create2(char *filename) {
 		namesize++;
 		if(*c<33 || *c>122 || namesize > 30){
 			printf("hi2 %c size:%d", *c,namesize);
+			printf("invalid filename");
 			return -1;
 		}
 		c++;
@@ -66,12 +67,14 @@ FILE2 create2(char *filename) {
 	
 	if(find_record(&record, parent_inode_addr, filename)!=-1){
 		//arquivo já existe
+		printf("file already exists");
 		return -1;
 	}
 
 	FILE2 handle = get_empty_file_handle();
 	
 	if(handle == -1){
+		printf("too many files opened");
 		//no space in memory structure
 		return -1;
 	}
@@ -143,6 +146,7 @@ int delete2(char *filename) {
 FILE2 open2(char *filename) {
 	if (!_initialized_)
 		init();
+
 	DWORD curr_dir_inode_addr = find_dir_inode(0, _cwd_+1);
 	
 	struct t2fs_record rec;
@@ -175,7 +179,48 @@ int read2(FILE2 handle, char *buffer, int size) {
 	if(_opened_file_[handle].busy!=1 || size<0){
 		return -1;
 	}
+	printf("will read %d bytes\n", size);
+	//checks how much of file will be read
+	int bytes_to_read = size;
+	if(_opened_file_[handle].curr_pointer+size > _opened_file_[handle].record.bytesFileSize){
+		bytes_to_read = _opened_file_[handle].record.bytesFileSize - _opened_file_[handle].curr_pointer;
+	}
 
+	
+
+	//if region starts on middle of a block must read it first
+	int bytes_left = bytes_to_read;
+	
+	while(bytes_left>0){
+		DWORD current_block = _opened_file_[handle].curr_pointer / _super_block_.BlockSize;
+		DWORD current_offset = _opened_file_[handle].curr_pointer % _super_block_.BlockSize;
+		BYTE block[_super_block_.BlockSize];
+		//reads block from disk
+		if(read_file_block(_opened_file_[handle].inode,current_block,block, _super_block_.BlockSize)<0)
+			   return -1;
+
+		//amount that can be read from actual block
+		int readable_bytes = _super_block_.BlockSize - current_offset; 
+		int amount_to_read_in_block;
+		BYTE *start; //address from which to start reading
+		start = block+current_offset;
+		if(readable_bytes>bytes_left)
+		{
+			//must not read entire block
+			amount_to_read_in_block = bytes_left;
+		} else{
+			//read until the end
+			amount_to_read_in_block = readable_bytes;
+		}	
+		memcpy(buffer, start, amount_to_read_in_block);
+		bytes_left -= amount_to_read_in_block;
+		buffer = buffer + amount_to_read_in_block;
+		_opened_file_[handle].curr_pointer += amount_to_read_in_block;
+	}
+
+	return bytes_to_read;
+
+/*
 	DWORD remaigning_blocks = _opened_file_[handle].record.bytesFileSize - _opened_file_[handle].curr_pointer;
 	
 	DWORD bytes_to_read;
@@ -183,6 +228,7 @@ int read2(FILE2 handle, char *buffer, int size) {
 		bytes_to_read = size;
 	else
 		 bytes_to_read = remaigning_blocks;
+
 	DWORD next_block = _opened_file_[handle].curr_pointer / _super_block_.BlockSize;
 	DWORD offset = _opened_file_[handle].curr_pointer % _super_block_.BlockSize;
 	int to_read = bytes_to_read;
@@ -205,11 +251,16 @@ int read2(FILE2 handle, char *buffer, int size) {
 		offset = 0;
 	}
 	_opened_file_[handle].curr_pointer += bytes_to_read;
-	return bytes_to_read;
+	return bytes_to_read;*/
 }
 int write2(FILE2 handle, char *buffer, int size) {
 	if (!_initialized_)
 		init();
+	
+	if(handle<0 || handle >= MAX_FILE){
+		return -1;
+	}
+
 	DWORD file_inode_addr = _opened_file_[handle].inode;
 	int increase_in_size_bytes =0;
 	int increase_in_size_blocks = 0;
@@ -244,7 +295,7 @@ int write2(FILE2 handle, char *buffer, int size) {
 		}
 		memcpy(block_buffer+curr_pointer_offset,buffer,bytes_to_copy);
 		buffer = buffer+bytes_to_copy;
-		bytes_to_write -= bytes_to_copy;
+		bytes_to_write = bytes_to_write - bytes_to_copy;
 		//writes block back
 		if(write_file_block(file_inode_addr,curr_pointer_block,block_buffer)!=0)
 		{ 
@@ -259,6 +310,7 @@ int write2(FILE2 handle, char *buffer, int size) {
 
 	//writes rest of bytes
 	while(bytes_to_write>0){
+		printf("while bytes to write:%d\n", bytes_to_write);
 	      if(curr_pointer_offset>0){
 			printf("severe problem on write2\n");
 			exit(-1);
@@ -294,6 +346,7 @@ int write2(FILE2 handle, char *buffer, int size) {
 			}
 		}
 		buffer = buffer + bytes_to_copy;
+		bytes_to_write -= bytes_to_copy;
 		_opened_file_[handle].curr_pointer += bytes_to_copy;
 		
 	}
@@ -305,7 +358,8 @@ int write2(FILE2 handle, char *buffer, int size) {
 	DWORD parent_inode = _opened_file_[handle].parent_inode;
 	int record_position = find_record(&dummy,parent_inode, _opened_file_[handle].record.name);
 	write_record(&_opened_file_[handle].record, parent_inode,record_position);
-	return 0;
+
+	return size;
 }
 int seek2(FILE2 handle, unsigned int offset) {
 	if (!_initialized_)
