@@ -37,6 +37,6 @@ t2fs_aux.o: $(SRC_DIR)/t2fs_aux.c
 	$(CC) -I. -c $(SRC_DIR)/t2fs_aux.c -o $(BIN_DIR)/t2fs_aux.o -Wall -m32
 
 clean:
-	rm -rf $(LIB_DIR)/*.a $(BIN_DIR)/*.o $(SRC_DIR)/*~ $(INC_DIR)/*~ $(TST_DIR)/*~ *~
+	rm -rf $(LIB_DIR)/*.a $(BIN_DIR)/* $(SRC_DIR)/*~ $(INC_DIR)/*~ $(TST_DIR)/*~ *~
 
 
