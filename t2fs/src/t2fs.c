@@ -160,6 +160,7 @@ FILE2 open2(char *filename) {
 		return -1;	// no space in memory structure
 	_opened_file_[handle].busy = 1;
 	_opened_file_[handle].inode = rec.i_node;
+	_opened_file_[handle].curr_pointer = 0;
 	return handle;	
 }
 int close2(FILE2 handle) {
