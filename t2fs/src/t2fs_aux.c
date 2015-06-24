@@ -2,6 +2,7 @@
 #include "../include/apidisk.h"
 #include <string.h>
 
+
 int init() {
 	if (read_super_block() != 0)
 		return -1;
@@ -14,6 +15,8 @@ int init() {
 	_current_dir_inode_ = 0;
 	// other initializations go here
 	_initialized_ = 1;
+	
+	printf("block size size %u",_super_block_.BlockSize);
 	return 0;
 }
 

@@ -1,4 +1,5 @@
 # Object files
+t2fs/bin/*
 #*.o
 *.ko
 *.obj

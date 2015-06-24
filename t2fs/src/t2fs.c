@@ -2,6 +2,8 @@
 #include "../include/t2fs_aux.h"
 #include <string.h>
 
+_initialized_=0;
+
 #define MAX_CWD 1024
 char _cwd_[MAX_CWD] = "/";
 
@@ -36,9 +38,11 @@ int identify2(char *name, int size) {
 }
 
 FILE2 create2(char *filename) {
-	if (!_initialized_)
+	if (!_initialized_){
+		printf("initializing\n");
 		init();
-	printf("hi_firs");
+		printf("done\n");
+	}
 	char *c;
 	c = filename;
 	int namesize = 0;
@@ -64,9 +68,7 @@ FILE2 create2(char *filename) {
 		//arquivo já existe
 		return -1;
 	}
-	
-	printf("hi");
-	
+
 	FILE2 handle = get_empty_file_handle();
 	
 	if(handle == -1){
@@ -96,7 +98,7 @@ FILE2 create2(char *filename) {
 
 //return an valid empty file handle. If none is free, returns -1
 FILE2 get_empty_file_handle(){
-	int ind;
+	int ind=0;
 	while(ind<MAX_FILE) {
 		if(_opened_file_[ind].busy==0){
 			return ind;
