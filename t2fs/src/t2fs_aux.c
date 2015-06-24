@@ -3,7 +3,8 @@
 #include <string.h>
 
 int init() {
-	read_super_block();
+	if (read_super_block() != 0)
+		return -1;
 	_inode_size_ = sizeof(struct t2fs_inode);
 	_record_size_ = sizeof(struct t2fs_record);
 	_dwords_per_block_ = _super_block_.BlockSize / sizeof(DWORD);
