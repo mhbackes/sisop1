@@ -167,6 +167,7 @@ int close2(FILE2 handle) {
 	if (!_initialized_)
 		init();
 	_opened_file_[handle].busy = 0;
+	return 0;
 }
 int read2(FILE2 handle, char *buffer, int size) {
 	if (!_initialized_)
