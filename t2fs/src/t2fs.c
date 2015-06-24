@@ -172,6 +172,10 @@ FILE2 open2(char *filename) {
 	_opened_file_[handle].inode = rec.i_node;
 	_opened_file_[handle].curr_pointer = 0;
 	_opened_file_[handle].parent_inode = _current_dir_inode_;
+	_opened_file_[handle].record = rec;
+	
+	printf("the size of the file is: %d bytes \n",_opened_file_[handle].record.bytesFileSize );
+
 	return handle;	
 }
 
@@ -193,13 +197,14 @@ int read2(FILE2 handle, char *buffer, int size) {
 	if(_opened_file_[handle].busy!=1 || size<0){
 		return -1;
 	}
-	printf("will read %d bytes\n", size);
+	
 	//checks how much of file will be read
 	int bytes_to_read = size;
 	if(_opened_file_[handle].curr_pointer+size > _opened_file_[handle].record.bytesFileSize){
 		bytes_to_read = _opened_file_[handle].record.bytesFileSize - _opened_file_[handle].curr_pointer;
 	}
-
+	printf("file has size: %d\n", _opened_file_[handle].record.bytesFileSize);
+	printf("will read %d bytes\n", bytes_to_read);
 	
 
 	//if region starts on middle of a block must read it first
@@ -227,45 +232,13 @@ int read2(FILE2 handle, char *buffer, int size) {
 			amount_to_read_in_block = readable_bytes;
 		}	
 		memcpy(buffer, start, amount_to_read_in_block);
+		printf("first value in buffer %d\n ",(int)(*buffer));
 		bytes_left -= amount_to_read_in_block;
 		buffer = buffer + amount_to_read_in_block;
 		_opened_file_[handle].curr_pointer += amount_to_read_in_block;
 	}
 
 	return bytes_to_read;
-
-/*
-	DWORD remaigning_blocks = _opened_file_[handle].record.bytesFileSize - _opened_file_[handle].curr_pointer;
-	
-	DWORD bytes_to_read;
-	if(size<=remaigning_blocks)
-		bytes_to_read = size;
-	else
-		 bytes_to_read = remaigning_blocks;
-
-	DWORD next_block = _opened_file_[handle].curr_pointer / _super_block_.BlockSize;
-	DWORD offset = _opened_file_[handle].curr_pointer % _super_block_.BlockSize;
-	int to_read = bytes_to_read;
-	BYTE temp[_super_block_.BlockSize];
-	while(to_read>0) {
-		if(to_read<_super_block_.BlockSize){
-			  //ler apenas um trecho
-			  if(read_file_block(_opened_file_[handle].inode,next_block,temp, to_read)<0)
-				   return -1;
-			  memcpy(buffer,temp+offset,to_read);
-			  to_read = 0;
-		} else {
-			  if(read_file_block(_opened_file_[handle].inode,next_block,temp, _super_block_.BlockSize))
-				   return -1;
-			  memcpy(buffer,temp+offset,_super_block_.BlockSize-offset);
-			  buffer =  buffer + _super_block_.BlockSize-offset;
-			  to_read = to_read - (_super_block_.BlockSize-offset); 
-		}
-		next_block++;
-		offset = 0;
-	}
-	_opened_file_[handle].curr_pointer += bytes_to_read;
-	return bytes_to_read;*/
 }
 int write2(FILE2 handle, char *buffer, int size) {
 	if (!_initialized_)
@@ -371,7 +344,7 @@ int write2(FILE2 handle, char *buffer, int size) {
 	struct t2fs_record dummy;
 	DWORD parent_inode = _opened_file_[handle].parent_inode;
 	int record_position = find_record(&dummy,parent_inode, _opened_file_[handle].record.name);
-	write_record(&_opened_file_[handle].record, parent_inode,record_position);
+	int result = write_record(&_opened_file_[handle].record, parent_inode,record_position);
 
 	return size;
 }
@@ -380,7 +353,13 @@ int seek2(FILE2 handle, unsigned int offset) {
 		init();
 	if (handle >= MAX_FILE || handle < 0)
 		return -1;
-	_opened_file_[handle].curr_pointer += offset;
+	if(offset == -1){
+		_opened_file_[handle].curr_pointer = _opened_file_[handle].record.bytesFileSize;
+	} else if (offset >= 0) {
+		_opened_file_[handle].curr_pointer = offset;
+	} else {
+		return -1;	
+	}
 	return 0;
 }
 
