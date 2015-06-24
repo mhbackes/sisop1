@@ -142,7 +142,29 @@ int delete2(char *filename) {
 FILE2 open2(char *filename) {
 	if (!_initialized_)
 		init();
-	return -1;
+	DWORD curr_dir_inode_addr = find_dir_inode(0, _cwd_+1);
+	
+	struct t2fs_record rec;
+	int pos = find_record(&rec, curr_dir_inode_addr, filename);
+	if (pos == -1)
+		return -1;	// invalid doesn't exists
+		
+	struct t2fs_inode file_inode;
+	if (read_inode(&file_inode, rec.i_node) == -1)
+		return -1; 	// invalid inode
+	
+	int i = 0;
+	while (_opened_file_[i].inode != rec.i_node)
+		i++;
+	if (i != MAX_FILE)
+		return -1; 	// file already opened
+	FILE2 handle = get_empty_file_handle();
+	if (handle == -1)
+		return -1;	// no space in memory structure
+	_opened_file_[handle].busy = 1;
+	_opened_file_[handle].inode = rec.i_node;
+	_opened_file_[handle].curr_pointer = 0;
+	return handle;	
 }
 int close2(FILE2 handle) {
 	if (!_initialized_)

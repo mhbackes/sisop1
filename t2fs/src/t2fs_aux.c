@@ -774,3 +774,4 @@ int dir_is_empty(DWORD inode) {
 	read_block((BYTE*) records, inode_data.dataPtr[0]);
 	return records[2].TypeVal == TYPEVAL_INVALIDO;
 }
+
