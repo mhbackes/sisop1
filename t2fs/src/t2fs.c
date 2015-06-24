@@ -262,7 +262,7 @@ int write2(FILE2 handle, char *buffer, int size) {
 	
 	//block to which current pointer points
 	DWORD curr_pointer_block = _opened_file_[handle].curr_pointer / _super_block_.BlockSize;
-	//ofset from the start of previous block
+	//ofset from the start of the block
 	DWORD curr_pointer_offset = _opened_file_[handle].curr_pointer % _super_block_.BlockSize;
 
 	//current pointer may be in the middle of a block. in such case this block must
@@ -289,14 +289,14 @@ int write2(FILE2 handle, char *buffer, int size) {
 			return -1;
 		}
 		_opened_file_[handle].curr_pointer += bytes_to_copy;
+
 	}
 	
-	//recalculates pointers
-	curr_pointer_block = _opened_file_[handle].curr_pointer / _super_block_.BlockSize;
-	curr_pointer_offset = _opened_file_[handle].curr_pointer % _super_block_.BlockSize;
-
 	//writes rest of bytes
 	while(bytes_to_write>0){		
+		//recalculates pointers
+		curr_pointer_block = _opened_file_[handle].curr_pointer / _super_block_.BlockSize;
+		curr_pointer_offset = _opened_file_[handle].curr_pointer % _super_block_.BlockSize;
 		int bytes_to_copy;
 		if(bytes_to_write< _super_block_.BlockSize-curr_pointer_offset) // in case of not writing until the end
 		{//of the block
