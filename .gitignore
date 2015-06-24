@@ -1,5 +1,6 @@
 # Object files
-*.o
+t2fs/bin/*
+#*.o
 *.ko
 *.obj
 *.elf
@@ -33,3 +34,7 @@
 
 # Backup files
 *~
+
+#kdevelop project files
+.kdev4/
+*.kdev4

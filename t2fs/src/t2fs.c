@@ -1,8 +1,35 @@
 #include "../include/t2fs.h"
 #include "../include/t2fs_aux.h"
 #include <string.h>
+#include <stdio.h>
 
-char _cwd_[1024] = "/";
+
+#define MAX_CWD 1024
+char _cwd_[MAX_CWD] = "/";
+
+#define NULL_BLOCK 0x0FFFFFFFF
+
+/*opened directories handles*/
+#define MAX_DIR 20
+typedef struct t2fs_dir_data {
+	int busy; //indicates if this entry in being used
+	int curr_entry;
+	DWORD inode;
+} DIR_DATA;
+
+DIR_DATA _opened_dir_[MAX_DIR];
+
+/*opened files handles*/
+#define MAX_FILE 20
+typedef struct t2fs_file_data {
+	int busy;//indicates if this entry in being used
+	DWORD curr_pointer;
+	DWORD inode;
+	DWORD parent_inode;
+	struct t2fs_record record;
+} FILE_DATA;
+
+FILE_DATA _opened_file_[MAX_FILE];
 
 int identify2(char *name, int size) {
 	strncpy(name,
@@ -13,32 +40,277 @@ int identify2(char *name, int size) {
 }
 
 FILE2 create2(char *filename) {
-	if (!_initialized_)
-			init();
+	if (!_initialized_){
+		init();
+	}
+	char *c;
+	c = filename;
+	int namesize = 0;
+	//checks if filename is valid
+	while(*c!='\0'){
+		namesize++;
+		if(*c<33 || *c>122 || namesize > 30){
+			printf("hi2 %c size:%d", *c,namesize);
+			return -1;
+		}
+		c++;
+	}
+	struct t2fs_record record;
+	
+	//pega inode do diretorio atual
+	DWORD parent_inode_addr;
+	parent_inode_addr = find_dir_inode(0, _cwd_+1);
+	
+	
+	//checks if file already exists
+	
+	if(find_record(&record, parent_inode_addr, filename)!=-1){
+		//arquivo já existe
+		return -1;
+	}
+
+	FILE2 handle = get_empty_file_handle();
+	
+	if(handle == -1){
+		//no space in memory structure
+		return -1;
+	}
+	
+	record.TypeVal = 0x01; //arquivo
+	strncpy(record.name, filename, namesize+1);
+	record.blocksFileSize = 0;
+	record.bytesFileSize = 0;
+	//creates inode for file
+	DWORD file_inode_addr = alloc_inode();
+	record.i_node = file_inode_addr;
+	append_record(parent_inode_addr, &record);
+	
+	struct t2fs_inode file_inode;
+	inode_init(&file_inode); 
+	write_inode(&file_inode, file_inode_addr);
+	
+	_opened_file_[handle].busy = 1;
+	_opened_file_[handle].curr_pointer = 0;
+	_opened_file_[handle].inode = file_inode_addr;
+	_opened_file_[handle].parent_inode = parent_inode_addr;
+	_opened_file_[handle].record = record;
+	return handle;
 }
+
+//return an valid empty file handle. If none is free, returns -1
+FILE2 get_empty_file_handle(){
+	int ind=0;
+	while(ind<MAX_FILE) {
+		if(_opened_file_[ind].busy==0){
+			return ind;
+		}
+		ind++;
+	}
+	return -1;	
+}
+
 int delete2(char *filename) {
 	if (!_initialized_)
-			init();
+		init();
+	//pega inode do diretorio atual
+	DWORD parent_inode_addr;
+	parent_inode_addr = find_dir_inode(0, _cwd_+1);
+	
+	//checks if file  exists
+	struct t2fs_record record;
+	int position=find_record(&record, parent_inode_addr, filename);
+	if(position!=-1){
+	  
+		deep_free_inode(record.i_node);
+		//remove registro
+		remove_record(parent_inode_addr,position);
+		//remove da tabelas de arquivos abertos
+		int i =0;
+		for(i=0;i<MAX_FILE; i++){
+			if(_opened_file_[i].busy==1){
+				if(_opened_file_[i].inode == record.i_node){
+					_opened_file_[i].busy=0;
+					break;
+				}
+			}
+		}
+		return 0;
+	}
+	return -1;
+
 }
+
 FILE2 open2(char *filename) {
 	if (!_initialized_)
-			init();
+		init();
+	DWORD curr_dir_inode_addr = find_dir_inode(0, _cwd_+1);
+	
+	struct t2fs_record rec;
+	int pos = find_record(&rec, curr_dir_inode_addr, filename);
+	if (pos == -1)
+		return -1;	// invalid doesn't exists		
+	
+	int i = 0;
+	while (_opened_file_[i].inode != rec.i_node)
+		i++;
+	if (i != MAX_FILE)
+		return -1; 	// file already opened
+	FILE2 handle = get_empty_file_handle();
+	if (handle == -1)
+		return -1;	// no space in memory structure
+	_opened_file_[handle].busy = 1;
+	_opened_file_[handle].inode = rec.i_node;
+	_opened_file_[handle].curr_pointer = 0;
+	return handle;	
 }
 int close2(FILE2 handle) {
 	if (!_initialized_)
-			init();
+		init();
 }
 int read2(FILE2 handle, char *buffer, int size) {
 	if (!_initialized_)
-			init();
+		init();
+	
+	//checks if handle is valid
+	if(_opened_file_[handle].busy!=1 || size<0){
+		return -1;
+	}
+
+	DWORD remaigning_blocks = _opened_file_[handle].record.bytesFileSize - _opened_file_[handle].curr_pointer;
+	
+	DWORD bytes_to_read;
+	if(size<=remaigning_blocks)
+		bytes_to_read = size;
+	else
+		 bytes_to_read = remaigning_blocks;
+	DWORD next_block = _opened_file_[handle].curr_pointer / _super_block_.BlockSize;
+	DWORD offset = _opened_file_[handle].curr_pointer % _super_block_.BlockSize;
+	int to_read = bytes_to_read;
+	BYTE temp[_super_block_.BlockSize];
+	while(to_read>0) {
+		if(to_read<_super_block_.BlockSize){
+			  //ler apenas um trecho
+			  if(read_file_block(_opened_file_[handle].inode,next_block,temp, to_read)<0)
+				   return -1;
+			  memcpy(buffer,temp+offset,to_read);
+			  to_read = 0;
+		} else {
+			  if(read_file_block(_opened_file_[handle].inode,next_block,temp, _super_block_.BlockSize))
+				   return -1;
+			  memcpy(buffer,temp+offset,_super_block_.BlockSize-offset);
+			  buffer =  buffer + _super_block_.BlockSize-offset;
+			  to_read = to_read - (_super_block_.BlockSize-offset); 
+		}
+		next_block++;
+		offset = 0;
+	}
+	_opened_file_[handle].curr_pointer += bytes_to_read;
+	return bytes_to_read;
 }
 int write2(FILE2 handle, char *buffer, int size) {
 	if (!_initialized_)
-			init();
+		init();
+	DWORD file_inode_addr = _opened_file_[handle].inode;
+	int increase_in_size_bytes =0;
+	int increase_in_size_blocks = 0;
+	if(_opened_file_[handle].record.bytesFileSize< size + _opened_file_[handle].curr_pointer) {
+		//blocks need to be allocated
+		increase_in_size_bytes = size + _opened_file_[handle].curr_pointer - _opened_file_[handle].record.bytesFileSize; 
+	}
+	
+	
+	BYTE block_buffer[_super_block_.BlockSize];
+	int bytes_to_write = size; //number of bytes that still have to be written
+	
+	//block to which current pointer points
+	DWORD curr_pointer_block = _opened_file_[handle].curr_pointer / _super_block_.BlockSize;
+	//ofset from the start of previous block
+	DWORD curr_pointer_offset = _opened_file_[handle].curr_pointer % _super_block_.BlockSize;
+
+	//current pointer may be in the middle of a block. in such case this block must
+	//be read, modified and written
+	//never increases number of blocks
+	if(curr_pointer_offset>0){
+		int bytes_to_copy;
+		if(bytes_to_write< _super_block_.BlockSize-curr_pointer_offset) // in case of not writing until the end
+		{								//of the block
+			bytes_to_copy = bytes_to_write;
+		} else {
+			bytes_to_copy = _super_block_.BlockSize-curr_pointer_offset;
+		}
+		
+		if(read_file_block(file_inode_addr, curr_pointer_block,block_buffer,_super_block_.BlockSize)!=0){
+			return -1;
+		}
+		memcpy(block_buffer+curr_pointer_offset,buffer,bytes_to_copy);
+		buffer = buffer+bytes_to_copy;
+		bytes_to_write -= bytes_to_copy;
+		//writes block back
+		if(write_file_block(file_inode_addr,curr_pointer_block,block_buffer)!=0)
+		{ 
+			return -1;
+		}
+		_opened_file_[handle].curr_pointer += bytes_to_copy;
+	}
+	
+	//recalculates pointers
+	curr_pointer_block = _opened_file_[handle].curr_pointer / _super_block_.BlockSize;
+	curr_pointer_offset = _opened_file_[handle].curr_pointer % _super_block_.BlockSize;
+
+	//writes rest of bytes
+	while(bytes_to_write>0){
+	      if(curr_pointer_offset>0){
+			printf("severe problem on write2\n");
+			exit(-1);
+		}
+		
+		int bytes_to_copy;
+		if(bytes_to_write< _super_block_.BlockSize-curr_pointer_offset) // in case of not writing until the end
+		{//of the block
+			bytes_to_copy = bytes_to_write;
+		} else {
+			bytes_to_copy = _super_block_.BlockSize-curr_pointer_offset;
+		}
+		
+		if(curr_pointer_block+1 > _opened_file_[handle].record.blocksFileSize){
+			//needs to create block in file
+			increase_in_size_blocks++;
+			create_next_file_block(file_inode_addr);
+			memcpy(block_buffer,buffer,bytes_to_copy);
+			if(write_file_block(file_inode_addr,curr_pointer_block,block_buffer)!=0)
+			{ 
+				return -1;
+			}
+			
+		} else {
+			//no need for new block
+			if(read_file_block(file_inode_addr, curr_pointer_block,block_buffer,_super_block_.BlockSize)!=0){
+				return -1;
+			}
+			memcpy(block_buffer,buffer,bytes_to_copy);
+			if(write_file_block(file_inode_addr,curr_pointer_block,block_buffer)!=0)
+			{ 
+				return -1;
+			}
+		}
+		buffer = buffer + bytes_to_copy;
+		_opened_file_[handle].curr_pointer += bytes_to_copy;
+		
+	}
+	//saves new size
+	_opened_file_[handle].record.blocksFileSize += increase_in_size_blocks;
+	_opened_file_[handle].record.bytesFileSize += increase_in_size_bytes;
+
+	struct t2fs_record dummy;
+	DWORD parent_inode = _opened_file_[handle].parent_inode;
+	int record_position = find_record(&dummy,parent_inode, _opened_file_[handle].record.name);
+	write_record(&_opened_file_[handle].record, parent_inode,record_position);
+	return 0;
 }
 int seek2(FILE2 handle, unsigned int offset) {
 	if (!_initialized_)
-			init();
+		init();
+	return -1;
 }
 
 int mkdir2(char *pathname) {
@@ -75,15 +347,70 @@ int mkdir2(char *pathname) {
 
 DIR2 opendir2(char *pathname) {
 	if (!_initialized_)
-			init();
+		init();
+	char cpypathname[strlen(pathname) + 1], *path;
+	strcpy(cpypathname, pathname);
+	int curr_inode, dir_inode;
+	if (cpypathname[0] == '/') {
+		curr_inode = 0;
+		path = cpypathname + 1;
+	} else {
+		curr_inode = _current_dir_inode_;
+		path = cpypathname;
+	}
+	dir_inode = find_dir_inode(curr_inode, path);
+	if(dir_inode == NULL_BLOCK)
+		return -1;
+	int i;
+	for (i = 0; i < MAX_DIR; i++) {
+		if (!_opened_dir_[i].busy) {
+			_opened_dir_[i].inode = dir_inode;
+			_opened_dir_[i].busy = 1;
+			_opened_dir_[i].curr_entry = 0;
+			return (DIR2) i;
+		}
+	}
+	return -1;
 }
+
 int readdir2(DIR2 handle, DIRENT2 *dentry) {
 	if (!_initialized_)
-			init();
+		init();
+	if (handle < 0 || handle >= MAX_DIR)
+		return -1;
+	if (!_opened_dir_[handle].busy)
+		return -1;
+	DWORD inode = _opened_dir_[handle].inode;
+	int entry = _opened_dir_[handle].curr_entry;
+	struct t2fs_record record;
+	if(read_record(&record, inode, entry) != 0)
+		return -1;
+	switch(record.TypeVal){
+	case TYPEVAL_DIRETORIO:
+		dentry->fileType = 1;
+		dentry->fileSize = inode_dir_size_blocks(record.i_node) * _super_block_.BlockSize;
+		break;
+	case TYPEVAL_REGULAR:
+		dentry->fileType = 0;
+		dentry->fileSize = record.blocksFileSize * _super_block_.BlockSize;
+		break;
+	default:
+		return -1;
+	}
+	strcpy(dentry->name, record.name);
+	_opened_dir_[handle].curr_entry++;
+	return 0;
 }
+
 int closedir2(DIR2 handle) {
 	if (!_initialized_)
-			init();
+		init();
+	if (handle < 0 || handle >= MAX_DIR)
+		return -1;
+	if (!_opened_dir_[handle].busy)
+		return -1;
+	_opened_dir_[handle].busy = 0;
+	return 0;
 }
 
 int rmdir2(char *pathname) {
@@ -123,7 +450,7 @@ int chdir2(char *pathname) {
 		init();
 	if (pathname == NULL || pathname[0] == '\0')
 		return -1;
-	char cwd_cpy[1024];
+	char cwd_cpy[MAX_CWD];
 	strcpy(cwd_cpy, _cwd_);
 	char pathname_cpy[strlen(pathname) + 1];
 	strcpy(pathname_cpy, pathname);
@@ -133,7 +460,6 @@ int chdir2(char *pathname) {
 		curr_inode = 0;
 		path = pathname_cpy + 1;
 	} else {
-#include "../include/t2fs.h"
 		curr_inode = _current_dir_inode_;
 		path = pathname_cpy;
 	}
@@ -150,8 +476,8 @@ int chdir2(char *pathname) {
 				strcpy(cwd_cpy, "/");
 		} else if (strcmp(path, ".") != 0) {
 			if (strcmp(cwd_cpy, "/") != 0)
-				strncat(cwd_cpy, "/", 1024);
-			strncat(cwd_cpy, path, 1024);
+				strncat(cwd_cpy, "/", MAX_CWD);
+			strncat(cwd_cpy, path, MAX_CWD);
 		}
 		path = next_path;
 	} while (first_bar != NULL);

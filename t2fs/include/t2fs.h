@@ -2,6 +2,7 @@
 #ifndef __LIBT2FS___
 #define __LIBT2FS___
 
+
 #define TYPEVAL_REGULAR     0x01
 #define TYPEVAL_DIRETORIO   0x02
 #define TYPEVAL_INVALIDO    0xFF
@@ -29,12 +30,12 @@ struct t2fs_superbloco {
     DWORD   FirstDataBlock;	/* Primeiro bloco l�gico da �rea de blocos de dados.*/
 } __attribute__((packed));
 
-/** Registro de diret�rio (entrada de diret�rio) */
+/** Registro de diretório (entrada de diretório) */
 struct t2fs_record {
-    BYTE    TypeVal;        /* Tipo da entrada. Indica se o registro � inv�lido (0xFF), arquivo (0x01 ou diret�rio (0x02) */
+    BYTE    TypeVal;        /* Tipo da entrada. Indica se o registro é inválido (0xFF), arquivo (0x01 ou diret�rio (0x02) */
     char    name[31];       /* Nome do arquivo. : string com caracteres ASCII (0x21 at� 0x7A), case sensitive. */
-    DWORD   blocksFileSize; /* Tamanho do arquivo, expresso em n�mero de blocos de dados */
-    DWORD   bytesFileSize;  /* Tamanho do arquivo. Expresso em n�mero de bytes. */
+    DWORD   blocksFileSize; /* Tamanho do arquivo, expresso em número de blocos de dados */
+    DWORD   bytesFileSize;  /* Tamanho do arquivo. Expresso em número de bytes. */
     DWORD   i_node;         /* i-node do arquivo */
     char    Reserved[20];
 } __attribute__((packed));
@@ -42,9 +43,9 @@ struct t2fs_record {
 /** i-node */
 struct t2fs_inode {
     DWORD   dataPtr[10];    /* Ponteiros diretos para blocos de dados do arquivo */
-    DWORD   singleIndPtr;   /* Ponteiro de indire��o simples */
-    DWORD   doubleIndPtr;   /* Ponteiro de indire��o dupla */
-    char    Reserved[16];   /* N�o usados */
+    DWORD   singleIndPtr;   /* Ponteiro de indireção simples */
+    DWORD   doubleIndPtr;   /* Ponteiro de indireção dupla */
+    char    Reserved[16];   /* Não usados */
 } __attribute__((packed));
 
 #define MAX_FILE_NAME_SIZE 255

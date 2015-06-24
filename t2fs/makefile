@@ -6,7 +6,7 @@
 #
 # NECESSARIO adaptar este esqueleto de makefile para suas necessidades.
 #
-# 
+#  
 
 AR=ar crs
 CC=gcc
@@ -16,13 +16,15 @@ BIN_DIR=./bin
 SRC_DIR=./src
 TST_DIR=./teste
 
-all:
+all: t2fs.a
 
 test: test.o t2fs.a
-	$(CC) -o $(BIN_DIR)/test $(BIN_DIR)/test.o -L$(LIB_DIR) -lt2fs -Wall -m32
+	$(CC) -o $(BIN_DIR)/test $(BIN_DIR)/test.o -L$(LIB_DIR) -lt2fs -Wall
 
-shell: t2fs.a
-	$(CC) -o $(BIN_DIR)/shell $(TST_DIR)/shell.c -L$(LIB_DIR) -lt2fs -Wall -m32
+
+shell: t2fs.o t2fs_aux.o
+	$(CC) -o $(BIN_DIR)/shell $(TST_DIR)/shell.c $(BIN_DIR)/t2fs.o $(BIN_DIR)/t2fs_aux.o $(LIB_DIR)/apidisk.o -L$(LIB_DIR) -lt2fs -Wall
+
 
 test.o: $(TST_DIR)/test.c
 	$(CC) -c $(TST_DIR)/test.c -o $(BIN_DIR)/test.o -Wall
@@ -34,9 +36,9 @@ t2fs.o: $(SRC_DIR)/t2fs.c
 	$(CC) -I. -c $(SRC_DIR)/t2fs.c -o $(BIN_DIR)/t2fs.o -Wall
 
 t2fs_aux.o: $(SRC_DIR)/t2fs_aux.c
-	$(CC) -I. -c $(SRC_DIR)/t2fs_aux.c -o $(BIN_DIR)/t2fs_aux.o -Wall -m32
+	$(CC) -I. -c $(SRC_DIR)/t2fs_aux.c -o $(BIN_DIR)/t2fs_aux.o -Wall
 
 clean:
-	rm -rf $(LIB_DIR)/*.a $(BIN_DIR)/*.o $(SRC_DIR)/*~ $(INC_DIR)/*~ $(TST_DIR)/*~ *~
+	rm -rf $(LIB_DIR)/*.a $(BIN_DIR)/* $(SRC_DIR)/*~ $(INC_DIR)/*~ $(TST_DIR)/*~ *~
 
 
