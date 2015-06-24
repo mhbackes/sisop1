@@ -151,7 +151,7 @@ FILE2 open2(char *filename) {
 	struct t2fs_record rec;
 	int pos = find_record(&rec, _current_dir_inode_, filename);
 	if (pos == -1) {
-		printf("file doesn't exists");
+		//printf("file doesn't exists");
 		return -1;	// file doesn't exists		
 	}
 	int i = 0;
@@ -160,12 +160,12 @@ FILE2 open2(char *filename) {
 			break;
 		
 	if (i != MAX_FILE && _opened_file_[i].busy) {
-		printf("file already opened");
+		//printf("file already opened");
 		return i; 	// file already opened
 	}
 	FILE2 handle = get_empty_file_handle();
 	if (handle == -1) {
-		printf("no space");
+		//printf("no space");
 		return -1;	// no space in memory structure
 	}
 	_opened_file_[handle].busy = 1;
@@ -174,7 +174,7 @@ FILE2 open2(char *filename) {
 	_opened_file_[handle].parent_inode = _current_dir_inode_;
 	_opened_file_[handle].record = rec;
 	
-	printf("the size of the file is: %d bytes \n",_opened_file_[handle].record.bytesFileSize );
+	//printf("the size of the file is: %d bytes \n",_opened_file_[handle].record.bytesFileSize );
 
 	return handle;	
 }
@@ -203,8 +203,8 @@ int read2(FILE2 handle, char *buffer, int size) {
 	if(_opened_file_[handle].curr_pointer+size > _opened_file_[handle].record.bytesFileSize){
 		bytes_to_read = _opened_file_[handle].record.bytesFileSize - _opened_file_[handle].curr_pointer;
 	}
-	printf("file has size: %d\n", _opened_file_[handle].record.bytesFileSize);
-	printf("will read %d bytes\n", bytes_to_read);
+	//printf("file has size: %d\n", _opened_file_[handle].record.bytesFileSize);
+	//printf("will read %d bytes\n", bytes_to_read);
 	
 
 	//if region starts on middle of a block must read it first
@@ -232,7 +232,7 @@ int read2(FILE2 handle, char *buffer, int size) {
 			amount_to_read_in_block = readable_bytes;
 		}	
 		memcpy(buffer, start, amount_to_read_in_block);
-		printf("first value in buffer %d\n ",(int)(*buffer));
+		//printf("first value in buffer %d\n ",(int)(*buffer));
 		bytes_left -= amount_to_read_in_block;
 		buffer = buffer + amount_to_read_in_block;
 		_opened_file_[handle].curr_pointer += amount_to_read_in_block;
@@ -296,13 +296,7 @@ int write2(FILE2 handle, char *buffer, int size) {
 	curr_pointer_offset = _opened_file_[handle].curr_pointer % _super_block_.BlockSize;
 
 	//writes rest of bytes
-	while(bytes_to_write>0){
-		printf("while bytes to write:%d\n", bytes_to_write);
-	      if(curr_pointer_offset>0){
-			printf("severe problem on write2\n");
-			exit(-1);
-		}
-		
+	while(bytes_to_write>0){		
 		int bytes_to_copy;
 		if(bytes_to_write< _super_block_.BlockSize-curr_pointer_offset) // in case of not writing until the end
 		{//of the block
