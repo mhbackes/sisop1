@@ -148,11 +148,7 @@ FILE2 open2(char *filename) {
 	struct t2fs_record rec;
 	int pos = find_record(&rec, curr_dir_inode_addr, filename);
 	if (pos == -1)
-		return -1;	// invalid doesn't exists
-		
-	struct t2fs_inode file_inode;
-	if (read_inode(&file_inode, rec.i_node) == -1)
-		return -1; 	// invalid inode
+		return -1;	// invalid doesn't exists		
 	
 	int i = 0;
 	while (_opened_file_[i].inode != rec.i_node)
