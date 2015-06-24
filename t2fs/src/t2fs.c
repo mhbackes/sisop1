@@ -166,6 +166,7 @@ FILE2 open2(char *filename) {
 int close2(FILE2 handle) {
 	if (!_initialized_)
 		init();
+	_opened_file_[handle].busy = 0;
 }
 int read2(FILE2 handle, char *buffer, int size) {
 	if (!_initialized_)
@@ -310,7 +311,7 @@ int write2(FILE2 handle, char *buffer, int size) {
 int seek2(FILE2 handle, unsigned int offset) {
 	if (!_initialized_)
 		init();
-	return -1;
+	
 }
 
 int mkdir2(char *pathname) {
