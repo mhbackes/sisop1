@@ -109,8 +109,33 @@ FILE2 get_empty_file_handle(){
 int delete2(char *filename) {
 	if (!_initialized_)
 		init();
-	return -1;
+		//pega inode do diretorio atual
+		DWORD parent_inode_addr;
+		parent_inode_addr = find_dir_inode(0, _cwd_+1);
+	
+		//checks if file  exists
+		struct t2fs_record record;
+		int position=find_record(&record, parent_inode_addr, filename);
+		if(position!=-1){
+		  
+			deep_free_inode(record.i_node);
+			//remove registro
+			remove_record(parent_inode_addr,position);
+			//remove da tabelas de arquivos abertos
+			int i =0;
+			for(i=0;i<MAX_FILE; i++){
+				if(_opened_file_[i].busy==1){
+					if(_opened_file_[i].inode == record.i_node){
+						_opened_file_[i].busy=0;
+						break;
+					}
+				}
+			}
+			return 0;
+		}
+		return -1;
 }
+
 FILE2 open2(char *filename) {
 	if (!_initialized_)
 		init();
