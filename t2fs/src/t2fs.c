@@ -167,6 +167,7 @@ FILE2 open2(char *filename) {
 	_opened_file_[handle].busy = 1;
 	_opened_file_[handle].inode = rec.i_node;
 	_opened_file_[handle].curr_pointer = 0;
+	_opened_file_[handle].parent_inode = _current_dir_inode_;
 	return handle;	
 }
 
@@ -323,7 +324,10 @@ int write2(FILE2 handle, char *buffer, int size) {
 int seek2(FILE2 handle, unsigned int offset) {
 	if (!_initialized_)
 		init();
-	
+	if (handle >= MAX_FILE || handle < 0)
+		return -1;
+	_opened_file_[handle].curr_pointer += offset;
+	return 0;
 }
 
 int mkdir2(char *pathname) {
