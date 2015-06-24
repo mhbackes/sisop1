@@ -16,7 +16,7 @@ int init() {
 	// other initializations go here
 	_initialized_ = 1;
 	
-	printf("block size size %u",_super_block_.BlockSize);
+	printf("block size size %d",_super_block_.BlockSize);
 	return 0;
 }
 
