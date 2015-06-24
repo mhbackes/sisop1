@@ -1,7 +1,7 @@
 #include "../include/t2fs.h"
 #include "../include/t2fs_aux.h"
 #include <string.h>
-
+#include <stdio.h>
 
 
 #define MAX_CWD 1024
@@ -26,6 +26,7 @@ typedef struct t2fs_file_data {
 	DWORD curr_pointer;
 	DWORD inode;
 	DWORD parent_inode;
+	struct t2fs_record record;
 } FILE_DATA;
 
 FILE_DATA _opened_file_[MAX_FILE];
@@ -92,7 +93,7 @@ FILE2 create2(char *filename) {
 	_opened_file_[handle].curr_pointer = 0;
 	_opened_file_[handle].inode = file_inode_addr;
 	_opened_file_[handle].parent_inode = parent_inode_addr;
-	
+	_opened_file_[handle].record = record;
 	return handle;
 }
 
@@ -175,19 +176,140 @@ int read2(FILE2 handle, char *buffer, int size) {
 		init();
 	
 	//checks if handle is valid
-	if(_opened_file_[handle].busy!=1){
+	if(_opened_file_[handle].busy!=1 || size<0){
 		return -1;
 	}
+
+	DWORD remaigning_blocks = _opened_file_[handle].record.bytesFileSize - _opened_file_[handle].curr_pointer;
 	
-	DWORD num_blocks = (size / _super_block_.BlockSize)+1;
-	
-	
-	return -1;
+	DWORD bytes_to_read;
+	if(size<=remaigning_blocks)
+		bytes_to_read = size;
+	else
+		 bytes_to_read = remaigning_blocks;
+	DWORD next_block = _opened_file_[handle].curr_pointer / _super_block_.BlockSize;
+	DWORD offset = _opened_file_[handle].curr_pointer % _super_block_.BlockSize;
+	int to_read = bytes_to_read;
+	BYTE temp[_super_block_.BlockSize];
+	while(to_read>0) {
+		if(to_read<_super_block_.BlockSize){
+			  //ler apenas um trecho
+			  if(read_file_block(_opened_file_[handle].inode,next_block,temp, to_read)<0)
+				   return -1;
+			  memcpy(buffer,temp+offset,to_read);
+			  to_read = 0;
+		} else {
+			  if(read_file_block(_opened_file_[handle].inode,next_block,temp, _super_block_.BlockSize))
+				   return -1;
+			  memcpy(buffer,temp+offset,_super_block_.BlockSize-offset);
+			  buffer =  buffer + _super_block_.BlockSize-offset;
+			  to_read = to_read - (_super_block_.BlockSize-offset); 
+		}
+		next_block++;
+		offset = 0;
+	}
+	_opened_file_[handle].curr_pointer += bytes_to_read;
+	return bytes_to_read;
 }
 int write2(FILE2 handle, char *buffer, int size) {
 	if (!_initialized_)
 		init();
-	return -1;
+	DWORD file_inode_addr = _opened_file_[handle].inode;
+	int increase_in_size_bytes =0;
+	int increase_in_size_blocks = 0;
+	if(_opened_file_[handle].record.bytesFileSize< size + _opened_file_[handle].curr_pointer) {
+		//blocks need to be allocated
+		increase_in_size_bytes = size + _opened_file_[handle].curr_pointer - _opened_file_[handle].record.bytesFileSize; 
+	}
+	
+	
+	BYTE block_buffer[_super_block_.BlockSize];
+	int bytes_to_write = size; //number of bytes that still have to be written
+	
+	//block to which current pointer points
+	DWORD curr_pointer_block = _opened_file_[handle].curr_pointer / _super_block_.BlockSize;
+	//ofset from the start of previous block
+	DWORD curr_pointer_offset = _opened_file_[handle].curr_pointer % _super_block_.BlockSize;
+
+	//current pointer may be in the middle of a block. in such case this block must
+	//be read, modified and written
+	//never increases number of blocks
+	if(curr_pointer_offset>0){
+		int bytes_to_copy;
+		if(bytes_to_write< _super_block_.BlockSize-curr_pointer_offset) // in case of not writing until the end
+		{								//of the block
+			bytes_to_copy = bytes_to_write;
+		} else {
+			bytes_to_copy = _super_block_.BlockSize-curr_pointer_offset;
+		}
+		
+		if(read_file_block(file_inode_addr, curr_pointer_block,block_buffer,_super_block_.BlockSize)!=0){
+			return -1;
+		}
+		memcpy(block_buffer+curr_pointer_offset,buffer,bytes_to_copy);
+		buffer = buffer+bytes_to_copy;
+		bytes_to_write -= bytes_to_copy;
+		//writes block back
+		if(write_file_block(file_inode_addr,curr_pointer_block,block_buffer)!=0)
+		{ 
+			return -1;
+		}
+		_opened_file_[handle].curr_pointer += bytes_to_copy;
+	}
+	
+	//recalculates pointers
+	curr_pointer_block = _opened_file_[handle].curr_pointer / _super_block_.BlockSize;
+	curr_pointer_offset = _opened_file_[handle].curr_pointer % _super_block_.BlockSize;
+
+	//writes rest of bytes
+	while(bytes_to_write>0){
+	      if(curr_pointer_offset>0){
+			printf("severe problem on write2\n");
+			exit(-1);
+		}
+		
+		int bytes_to_copy;
+		if(bytes_to_write< _super_block_.BlockSize-curr_pointer_offset) // in case of not writing until the end
+		{//of the block
+			bytes_to_copy = bytes_to_write;
+		} else {
+			bytes_to_copy = _super_block_.BlockSize-curr_pointer_offset;
+		}
+		
+		if(curr_pointer_block+1 > _opened_file_[handle].record.blocksFileSize){
+			//needs to create block in file
+			increase_in_size_blocks++;
+			create_next_file_block(file_inode_addr);
+			memcpy(block_buffer,buffer,bytes_to_copy);
+			if(write_file_block(file_inode_addr,curr_pointer_block,block_buffer)!=0)
+			{ 
+				return -1;
+			}
+			
+		} else {
+			//no need for new block
+			if(read_file_block(file_inode_addr, curr_pointer_block,block_buffer,_super_block_.BlockSize)!=0){
+				return -1;
+			}
+			memcpy(block_buffer,buffer,bytes_to_copy);
+			if(write_file_block(file_inode_addr,curr_pointer_block,block_buffer)!=0)
+			{ 
+				return -1;
+			}
+		}
+		buffer = buffer + bytes_to_copy;
+		_opened_file_[handle].curr_pointer += bytes_to_copy;
+		
+	}
+	//saves new size
+	_opened_file_[handle].record.blocksFileSize += increase_in_size_blocks;
+	_opened_file_[handle].record.bytesFileSize += increase_in_size_bytes;
+
+	struct t2fs_record dummy;
+	DWORD parent_inode = _opened_file_[handle].parent_inode;
+	int record_position = find_record(&dummy,parent_inode, _opened_file_[handle].record.name);
+	write_record(&_opened_file_[handle].record, parent_inode,record_position);
+	return 0;
 }
 int seek2(FILE2 handle, unsigned int offset) {
 	if (!_initialized_)

@@ -66,10 +66,10 @@ int record_offset(DWORD record);
 int read_record(struct t2fs_record *record_data, DWORD inode, int position);
 int write_record(struct t2fs_record *record_data, DWORD inode, int position);
 
-
+//adds a block to a file
+DWORD create_next_file_block(DWORD file_inode_ptr);
 //IO de dados de arquivos
 //retorna -1 em caso de erro
-
 int write_file_block(DWORD inode_ptr, DWORD logical_block, BYTE *data);
 int read_file_block(DWORD inode_ptr, DWORD logical_block, BYTE *data,int size);
 /*adiciona registro a um diretório*/

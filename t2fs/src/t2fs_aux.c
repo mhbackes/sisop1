@@ -476,7 +476,7 @@ DWORD get_file_logic_block_addr(DWORD inode_ptr, DWORD logical_block){
 		BYTE buff[_super_block_.BlockSize];
 		if (read_block(buff, lvl1_ptr) != 0)
 			return -1;
-		data_block_ptr = buff + offset*sizeof(DWORD);
+		data_block_ptr = *(buff + offset*sizeof(DWORD));
 	} else {
 	    //double indirection
 	    DWORD offset_double_indirection = logical_block-_dwords_per_block_-10;
@@ -486,19 +486,105 @@ DWORD get_file_logic_block_addr(DWORD inode_ptr, DWORD logical_block){
 		if (read_block(buff, lvl1_ptr) != 0)
 			return -1;
 		offset = offset_double_indirection / _dwords_per_block_;
-		lvl2_ptr = buff + offset*sizeof(DWORD);
+		lvl2_ptr = *(buff + offset*sizeof(DWORD));
 		
 		BYTE buff2[_super_block_.BlockSize];
 		if (read_block(buff2, lvl2_ptr) != 0)
 			return -1;
 		
 		offset = offset_double_indirection % _dwords_per_block_;
-		data_block_ptr = buff + offset*sizeof(DWORD);
+		data_block_ptr = *(buff + offset*sizeof(DWORD));
 	    } else {
 		return -1;
 	    }
 	}
 	return data_block_ptr;
+}
+//expands file by a block. returns new block addr. 
+//returns -1 in case of error
+DWORD create_next_file_block(DWORD file_inode_ptr) {
+	struct t2fs_inode file_inode;
+	read_inode(&file_inode,file_inode_ptr);	
+	//seaching direct pointers
+	int i;
+	DWORD nwBlock;
+	for(i=0;i<10;i++){
+		if(file_inode.dataPtr[i]==NULL_BLOCK){
+			//found
+			nwBlock = alloc_block();
+			file_inode.dataPtr[i] = nwBlock;
+			write_inode(&file_inode, file_inode_ptr);
+			return nwBlock;
+		}
+	}
+	
+	//checks if first indirection pointer is null
+	if(file_inode.singleIndPtr==NULL_BLOCK){
+		nwBlock = alloc_block();
+		file_inode.singleIndPtr = create_single_ind_block(nwBlock);
+		write_inode(&file_inode, file_inode_ptr);
+		return nwBlock;
+	} else {
+	  //checks for an empty entry
+	  DWORD buff[_dwords_per_block_];
+	  if (read_block((BYTE*)buff, file_inode.singleIndPtr) != 0)
+		  return -1;
+	  for(i=0;i<_dwords_per_block_;i++){
+		if(buff[i]==NULL_BLOCK){
+			//found
+			nwBlock = alloc_block();
+			buff[i]=nwBlock;
+			write_block((BYTE*)buff, file_inode.singleIndPtr);
+			return nwBlock;
+		} 
+	  }
+	  
+	}
+	
+	//check for space on double indirection area
+	if(file_inode.doubleIndPtr==NULL_BLOCK){
+		nwBlock = alloc_block();
+		file_inode.singleIndPtr = create_double_ind_block(nwBlock);
+		write_inode(&file_inode, file_inode_ptr);
+		return nwBlock;
+	} else {
+		DWORD lvl1[_dwords_per_block_];
+		if (read_block((BYTE*)lvl1, file_inode.doubleIndPtr) != 0)
+		  return -1;
+		
+	  
+		//needs to find space on one of the entries
+		for(i=0;i<_dwords_per_block_;i++)
+		{
+			//block is completely free. create and add.
+			if(lvl1[i]==NULL_BLOCK){
+				nwBlock = alloc_block();
+				lvl1[i] = create_single_ind_block(nwBlock);
+				write_block((BYTE*)lvl1,file_inode.doubleIndPtr);
+				return nwBlock;
+			} else {//needs to go down a level to check
+				DWORD lvl2[_dwords_per_block_];
+				if (read_block((BYTE*)lvl2, lvl1[i]) != 0)
+					return -1;
+				int j;
+				for(j=0;j<_dwords_per_block_;j++){
+					if(lvl2[j] == NULL_BLOCK){
+						nwBlock = alloc_block();
+						lvl2[j]=nwBlock;
+						write_block((BYTE*)lvl2, lvl1[i]);
+						return nwBlock;
+					  
+					}
+				  
+				}
+				
+			  
+			}
+		
+		}
+	}
+	return -1;
+  
 }
 
 int write_file_block(DWORD inode_ptr, DWORD logical_block, BYTE *data){
@@ -512,7 +598,7 @@ int read_file_block(DWORD inode_ptr, DWORD logical_block, BYTE *data, int size){
 	BYTE data_buff[_super_block_.BlockSize];
 	if (read_block(data_buff, block_addr) != 0)
 		return -1;
-	strncpy(data, data_buff, size);
+	memcpy((char*)data, (char*)data_buff, size);
 	return 0; 
 }
 
