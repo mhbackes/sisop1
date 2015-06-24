@@ -74,7 +74,7 @@ DWORD inode_size_bytes(DWORD inode) {
 	return -1;
 }
 
-DWORD inode_size_blocks(DWORD inode) {
+DWORD inode_dir_size_blocks(DWORD inode) {
 	struct t2fs_record dot_record;
 	if (find_record(&dot_record, inode, ".") >= 0) {
 		return dot_record.blocksFileSize;

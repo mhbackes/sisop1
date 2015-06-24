@@ -51,7 +51,7 @@ DWORD alloc_inode();
 int free_inode(DWORD inode);
 int deep_free_inode(DWORD inode); //delete2 <- pode ser util para deletar arquivo
 DWORD inode_size_bytes(DWORD inode);
-DWORD inode_size_blocks(DWORD inode);
+DWORD inode_dir_size_blocks(DWORD inode);
 void add_size_bytes(DWORD inode, DWORD bytes); // write2 <- usar quando o arquivo aumenta
 void add_size_blocks(DWORD inode, DWORD blocks); // write2 <- usar quando o arquivo aumenta
 

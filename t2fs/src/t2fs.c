@@ -208,13 +208,14 @@ int readdir2(DIR2 handle, DIRENT2 *dentry) {
 	struct t2fs_record record;
 	if(read_record(&record, inode, entry) != 0)
 		return -1;
-	dentry->fileSize = inode_size_blocks(record.i_node) * _super_block_.BlockSize;
 	switch(record.TypeVal){
 	case TYPEVAL_DIRETORIO:
 		dentry->fileType = 1;
+		dentry->fileSize = inode_dir_size_blocks(record.i_node) * _super_block_.BlockSize;
 		break;
 	case TYPEVAL_REGULAR:
 		dentry->fileType = 0;
+		dentry->fileSize = record.blocksFileSize * _super_block_.BlockSize;
 		break;
 	default:
 		return -1;
