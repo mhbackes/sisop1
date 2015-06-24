@@ -39,9 +39,7 @@ int identify2(char *name, int size) {
 
 FILE2 create2(char *filename) {
 	if (!_initialized_){
-		printf("initializing\n");
 		init();
-		printf("done\n");
 	}
 	char *c;
 	c = filename;
@@ -59,7 +57,7 @@ FILE2 create2(char *filename) {
 	
 	//pega inode do diretorio atual
 	DWORD parent_inode_addr;
-	parent_inode_addr = find_dir_inode(0, _cwd_);
+	parent_inode_addr = find_dir_inode(0, _cwd_+1);
 	
 	
 	//checks if file already exists

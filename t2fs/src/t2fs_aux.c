@@ -22,7 +22,10 @@ int init() {
 int read_super_block() {
 	char buff[SECTOR_SIZE];
 	if (read_sector(0, buff) != 0)
+	{  
+		printf("error while reading superblock\n");
 		return -1;
+	}
 	memcpy(&_super_block_, buff, sizeof(_super_block_));
 	return 0;
 }
