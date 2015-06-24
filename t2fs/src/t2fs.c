@@ -134,7 +134,9 @@ int delete2(char *filename) {
 		return 0;
 	}
 	return -1;
+
 }
+
 FILE2 open2(char *filename) {
 	if (!_initialized_)
 		init();
@@ -147,6 +149,7 @@ int close2(FILE2 handle) {
 int read2(FILE2 handle, char *buffer, int size) {
 	if (!_initialized_)
 		init();
+	
 	return -1;
 }
 int write2(FILE2 handle, char *buffer, int size) {
