@@ -6,7 +6,7 @@
 #
 # NECESSARIO adaptar este esqueleto de makefile para suas necessidades.
 #
-# 
+#  
 
 AR=ar crs
 CC=gcc
