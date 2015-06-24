@@ -143,32 +143,43 @@ int delete2(char *filename) {
 FILE2 open2(char *filename) {
 	if (!_initialized_)
 		init();
-	DWORD curr_dir_inode_addr = find_dir_inode(0, _cwd_+1);
 	
 	struct t2fs_record rec;
-	int pos = find_record(&rec, curr_dir_inode_addr, filename);
-	if (pos == -1)
-		return -1;	// invalid doesn't exists		
-	
+	int pos = find_record(&rec, _current_dir_inode_, filename);
+	if (pos == -1) {
+		printf("file doesn't exists");
+		return -1;	// file doesn't exists		
+	}
 	int i = 0;
-	while (_opened_file_[i].inode != rec.i_node)
-		i++;
-	if (i != MAX_FILE)
-		return -1; 	// file already opened
+	for (i=0; i<MAX_FILE; i++)
+		if (_opened_file_[i].inode == rec.i_node)
+			break;
+		
+	if (i != MAX_FILE && _opened_file_[i].busy) {
+		printf("file already opened");
+		return i; 	// file already opened
+	}
 	FILE2 handle = get_empty_file_handle();
-	if (handle == -1)
+	if (handle == -1) {
+		printf("no space");
 		return -1;	// no space in memory structure
+	}
 	_opened_file_[handle].busy = 1;
 	_opened_file_[handle].inode = rec.i_node;
 	_opened_file_[handle].curr_pointer = 0;
 	return handle;	
 }
+
 int close2(FILE2 handle) {
 	if (!_initialized_)
 		init();
+	if (handle >= MAX_FILE || handle < 0)
+		return -1;
+	
 	_opened_file_[handle].busy = 0;
 	return 0;
 }
+
 int read2(FILE2 handle, char *buffer, int size) {
 	if (!_initialized_)
 		init();
