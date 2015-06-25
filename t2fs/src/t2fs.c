@@ -55,33 +55,13 @@ FILE2 create2(char *filename) {
 	if (init() < 0)
 		return -1;
 
-	DWORD first_inode_ptr;
 	int size = strlen(filename);
 	char namecpy[size + 1];
-	char *path;
 	strcpy(namecpy, filename);
-	if (namecpy[0] == '/') {
-		first_inode_ptr = 0;
-		path = namecpy + 1;
-	} else {
-		first_inode_ptr = _current_dir_inode_;
-		path = namecpy;
-	}
-
-	int lo = last_occurrence(namecpy, '/');
-	DWORD parent_inode_addr;
-	char *file_name;
-	if (lo == 0) {
-		file_name = path;
-		parent_inode_addr = first_inode_ptr;
-	} else {
-		path[lo] = '\0';
-		file_name = path + lo + 1;
-		parent_inode_addr = find_dir_inode(first_inode_ptr, path);
-	}
+	DWORD parent_inode_addr = get_parent_inode(namecpy);
 	if (parent_inode_addr == NULL_BLOCK)
 		return -1;
-
+	char* file_name = parse_file_name(filename);
 	struct t2fs_record record;
 	if (find_record(&record, parent_inode_addr, file_name) != -1) {
 		//arquivo já existe
@@ -160,7 +140,6 @@ int delete2(char *filename) {
 		return 0;
 	}
 	return -1;
-
 }
 
 FILE2 open2(char *filename) {
