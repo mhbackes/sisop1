@@ -1,9 +1,23 @@
-/*
- * cat2.c
- *
- *  Created on: Jun 25, 2015
- *      Author: mhbackes
- */
+ /*
+  * 
+  * Teste cat
+  * 
+  * Este teste é uma versão do comando cat do Unix simplificada e adaptada
+  * para funcionar com o sistema de arquivos T2FS. Dado o caminho absoluto do
+  * arquivo, o programa imprime seu conteúdo na tela.
+  * 
+  * Uso:
+  * 	cat2 filename
+  * Onde:
+  * filename é o caminho (absoluto ou relativo ao diretório root) do arquivo
+  * armazenado no disco.
+  * 
+  * Saída Esperada:
+  * Se o caminho do arquivo especificado for válido, o programa deve imprimir
+  * na tela todo o conteúdo do arquivo. Senão, o programa imprime uma mensagem
+  * de erro e termina.
+  * 
+  */
 
 #include <stdio.h>
 #include "../include/t2fs.h"

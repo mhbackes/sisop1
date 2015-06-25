@@ -1,8 +1,23 @@
-/* mkdir.c
- *
- *  Created on: Jun 25, 2015
- *      Author: mhbackes
- */
+ /*
+  *
+  * Teste rmdir2
+  *
+  * Este teste é uma versão do comando rmdir do Unix simplificada e adaptada
+  * para funcionar com o sistema de arquivos T2FS. Remove o diretório vazio
+  * especificado pelo caminho informado.
+  *
+  * Uso:
+  * 	rm2 pathname
+  * Onde:
+  * pathname é o caminho (absoluto ou relativo ao diretório root) do diretório
+  * vazio a ser removido.
+  *
+  * Saída Esperada:
+  * Se o diretório espeficicado for válido o programa remove o diretório. Se o
+  * caminho for um diretório não vazio, arquivo ou não existir, o programa
+  * deve retornar uma mensagem de erro.
+  *
+  */
 
 #include <stdio.h>
 #include "../include/t2fs.h"
