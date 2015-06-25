@@ -32,7 +32,7 @@ int main (int argc, char* argv[]){
 		return 0;
 	}
 	int error = rmdir2(argv[1]);
-	if(error != 0){
+	if(error == 0){
 		printf("Dirrectory %s removed.\n", argv[1]);
 	} else {
 		puts("Could not remove directory.");

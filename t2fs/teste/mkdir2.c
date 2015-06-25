@@ -32,7 +32,7 @@ int main (int argc, char* argv[]){
 		return 0;
 	}
 	int error = mkdir2(argv[1]);
-	if(error != 0){
+	if(error == 0){
 		printf("Directory %s created.\n", argv[1]);
 	} else {
 		puts("Could not create directory.");
