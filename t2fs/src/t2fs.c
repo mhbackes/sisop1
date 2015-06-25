@@ -79,12 +79,13 @@ FILE2 create2(char *filename) {
 		return -1;
 	}
 	
-	record.TypeVal = 0x01; //arquivo
+	record.TypeVal = TYPEVAL_REGULAR; //arquivo
 	strncpy(record.name, filename, namesize+1);
 	record.blocksFileSize = 0;
 	record.bytesFileSize = 0;
 	//creates inode for file
 	DWORD file_inode_addr = alloc_inode();
+	inode_init(file_inode_addr);
 	record.i_node = file_inode_addr;
 	append_record(parent_inode_addr, &record);
 	
