@@ -25,3 +25,6 @@ rm2: $(LIB_DIR)/libt2fs.a
 
 rmdir2: $(LIB_DIR)/libt2fs.a
 	$(CC) -g -o rmdir2 $(TST_DIR)/rmdir2.c -L$(LIB_DIR) -lt2fs -Wall
+
+clean:
+	rm -rf cat2 cp2 ls2 mkdir2 rm2 rmdir2 *.~
