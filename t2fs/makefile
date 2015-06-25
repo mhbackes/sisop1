@@ -16,7 +16,7 @@ BIN_DIR=./bin
 SRC_DIR=./src
 TST_DIR=./teste
 
-all: t2fs.a
+all: libt2fs.a
 
 debug : t2fs.o t2fs_aux.o test.o
 	$(CC) -g -o $(BIN_DIR)/debug $(BIN_DIR)/test.o $(BIN_DIR)/t2fs_aux.o $(BIN_DIR)/t2fs.o $(LIB_DIR)/apidisk.o -Wall
