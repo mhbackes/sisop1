@@ -55,10 +55,7 @@ FILE2 create2(char *filename) {
 	if (init() < 0)
 		return -1;
 
-	int size = strlen(filename);
-	char namecpy[size + 1];
-	strcpy(namecpy, filename);
-	DWORD parent_inode_addr = get_parent_inode(namecpy);
+	DWORD parent_inode_addr = get_parent_inode(filename);
 	if (parent_inode_addr == NULL_BLOCK)
 		return -1;
 	char* file_name = parse_file_name(filename);
@@ -117,12 +114,13 @@ int delete2(char *filename) {
 	if (init() < 0)
 		return -1;
 	//pega inode do diretorio atual
-	DWORD parent_inode_addr;
-	parent_inode_addr = find_dir_inode(0, _cwd_ + 1);
+	
+	DWORD parent_inode_addr = get_parent_inode(filename);
+	char* name = parse_file_name(filename);
 
 	//checks if file  exists
 	struct t2fs_record record;
-	int position = find_record(&record, parent_inode_addr, filename);
+	int position = find_record(&record, parent_inode_addr, name);
 	if (position != -1 && record.TypeVal == TYPEVAL_REGULAR) {
 		deep_free_inode(record.i_node);
 		//remove registro
