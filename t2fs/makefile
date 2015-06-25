@@ -16,7 +16,7 @@ BIN_DIR=./bin
 SRC_DIR=./src
 TST_DIR=./teste
 
-all: t2fs.a
+all: libt2fs.a
 
 dir_size: $(TST_DIR)/dir_size.c t2fs.a
 	$(CC) -o $(BIN_DIR)/dir_size $(TST_DIR)/dir_size.c -L$(LIB_DIR) -lt2fs -Wall
