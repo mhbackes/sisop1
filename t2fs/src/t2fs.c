@@ -43,29 +43,36 @@ FILE2 create2(char *filename) {
 	if (!_initialized_){
 		init();		
 	}
-	char *c;
-	c = filename;
-	int namesize = 0;
-	//checks if filename is valid
-	while(*c!='\0'){
-		namesize++;
-		if(*c<33 || *c>122 || namesize > 30){
-			printf("hi2 %c size:%d", *c,namesize);
-			printf("invalid filename");
-			return -1;
-		}
-		c++;
+	
+	DWORD first_inode_ptr;
+	int size = strlen(filename);
+	char namecpy[size+1];
+	char *path;
+	strcpy(namecpy, filename);
+	if(namecpy[0] == '/') {
+		first_inode_ptr = 0;
+		path = namecpy + 1;
+	} else {
+		first_inode_ptr = _current_dir_inode_;
+		path = namecpy;
 	}
-	struct t2fs_record record;
 	
-	//pega inode do diretorio atual
+	int lo = last_occurrence(namecpy, '/');
 	DWORD parent_inode_addr;
-	parent_inode_addr = find_dir_inode(0, _cwd_+1);
-	
-	
-	//checks if file already exists
-	
-	if(find_record(&record, parent_inode_addr, filename)!=-1){
+	char *file_name;
+	if (lo == 0) {
+		file_name = path;
+		parent_inode_addr = first_inode_ptr;
+	} else {
+		path[lo] = '\0';
+		file_name = path + lo + 1;
+		parent_inode_addr = find_dir_inode(first_inode_ptr, path);
+	}
+	if (parent_inode_addr == NULL_BLOCK)
+		return -1;
+		
+	struct t2fs_record record;			
+	if(find_record(&record, parent_inode_addr, file_name)!=-1){
 		//arquivo já existe
 		printf("file already exists");
 		return -1;
@@ -79,13 +86,26 @@ FILE2 create2(char *filename) {
 		return -1;
 	}
 	
+	char *c;
+	c = file_name;
+	int namesize = 0;
+	//checks if filename is valid
+	while(*c!='\0'){
+		namesize++;
+		if(*c<33 || *c>122 || namesize > 30){
+			printf("hi2 %c size:%d", *c,namesize);
+			printf("invalid filename");
+			return -1;
+		}
+		c++;
+	}
+	
 	record.TypeVal = TYPEVAL_REGULAR; //arquivo
-	strncpy(record.name, filename, namesize+1);
+	strncpy(record.name, file_name, namesize+1);
 	record.blocksFileSize = 0;
 	record.bytesFileSize = 0;
 	//creates inode for file
 	DWORD file_inode_addr = alloc_inode();
-	inode_init(file_inode_addr);
 	record.i_node = file_inode_addr;
 	append_record(parent_inode_addr, &record);
 	
