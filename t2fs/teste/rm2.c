@@ -1,9 +1,23 @@
-/*
- * rm2.c
- *
- *  Created on: Jun 25, 2015
- *      Author: mhbackes
- */
+ /*
+  *
+  * Teste rm2
+  *
+  * Este teste é uma versão do comando rm do Unix simplificada e adaptada para
+  * funcionar com o sistema de arquivos T2FS. Remove o arquivo especificado
+  * pelo caminho informado.
+  *
+  * Uso:
+  * 	rm2 pathname
+  * Onde:
+  * filename é o caminho (absoluto ou relativo ao diretório root) do arquivo
+  * a ser removido.
+  *
+  * Saída Esperada:
+  * Se o caminho espeficidado for válido, o programa remove o arquivo
+  * especificado. Se o caminho for um diretório ou não existir, o programa
+  * deve imprimir uma mensagem de erro.
+  *
+  */
 
 #include <stdio.h>
 #include "../include/t2fs.h"

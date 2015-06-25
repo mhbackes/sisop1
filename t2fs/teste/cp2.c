@@ -1,16 +1,28 @@
-/*
- * cpyfile.c
- *
- *  Created on: Jun 25, 2015
- *      Author: mhbackes
- */
-
-/*
- * ls2.c
- *
- *  Created on: Jun 25, 2015
- *      Author: mhbackes
- */
+ /*
+  * 
+  * Teste cp2
+  *
+  * Este teste é uma versão do comando cp do Unix simplificada e adaptada para
+  * funcionar com o sistema de arquivos T2FS. Dados os caminhos do arquivo de
+  * origem no sistema de arquivos atual e o caminho do arquivo de destino a
+  * ser criado no sistema de arquivos T2FS, copia o conteúdo do arquivo de
+  * origem para o arquivo de destino.
+  *
+  * Uso:
+  * 	cp2 srcfile dstfile
+  * Onde:
+  * srcfile é o caminho (absoluto ou relativo) do arquivo no sistema de
+  * arquivos atual a ser copiado.
+  * dstfile é o caminho (absoluto ou relativo ao diretório root) do arquivo no
+  * sistema de arquivos T2FS a ser criado.
+  *
+  * Saída Esperada:
+  * Se o arquivo de origem for aberto, o arquivo de destino for criado e a
+  * transferência de dados obtiver sucesso, o programa deve imprimir uma
+  * mensagem de sucesso. Se alguma dessa operações não for completa, o
+  * programa deve imprimir uma mensgem de erro.
+  *
+  */
 
 #include <stdio.h>
 #include "../include/t2fs.h"

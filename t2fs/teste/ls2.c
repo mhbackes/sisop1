@@ -1,9 +1,24 @@
-/*
- * ls2.c
- *
- *  Created on: Jun 25, 2015
- *      Author: mhbackes
- */
+ /*
+  *
+  * Teste ls2
+  * Este teste é uma versão do comando ls do Unix simplificada e adaptada para
+  * funcionar com o sistema de arquivos T2FS. Imprime todos os arquivos do
+  * diretório atual.
+  *
+  * Uso
+  * 	ls2 [pathname]
+  * Onde:
+  * pathname é o caminho (absoluto ou relativo ao diretório root) do diretório
+  * o qual deseja-se listar os arquivos.
+  *
+  * Saída Esperada
+  * Se o pathname não for informado, o resultado esperado é que o programa
+  * imprima uma tabela contendo as informações dos arquivos do diretório root.
+  * Se o pathname for informado e válido, o programa deve imprimir os arquivos
+  * do diretório correspondente ao pathname. Se o pathname não for válido, o
+  * programa deve imprimir uma mensagem de erro.
+  *
+  */
 
 #include <stdio.h>
 #include "../include/t2fs.h"
