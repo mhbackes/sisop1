@@ -863,3 +863,34 @@ int dir_is_empty(DWORD inode) {
 	return records[2].TypeVal == TYPEVAL_INVALIDO;
 }
 
+DWORD get_parent_inode(char *str) {
+	DWORD first_inode_ptr;
+	char* path;
+	if(str[0] == '/') {
+		path = str + 1;
+		first_inode_ptr = 0;	
+	} else	{
+		path = str;	
+		first_inode_ptr = _current_dir_inode_;
+	}
+	int lo = last_occurrence(str, '/');
+	DWORD parent_inode_ptr;
+	if (lo == 0) {
+		parent_inode_ptr = first_inode_ptr;
+	} else {		
+		*(path+lo) = '\0';
+		parent_inode_ptr = find_dir_inode(first_inode_ptr, path);
+	}
+	return parent_inode_ptr;
+}
+
+char* parse_file_name(char *str) {
+	char* file_name;
+	char* lo = strrchr(str, '/');
+	if (lo) {
+		file_name = lo + 1;
+	} else {
+		file_name = str;
+	}
+	return file_name;
+}

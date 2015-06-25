@@ -203,8 +203,13 @@ int close2(FILE2 handle) {
 	if (handle >= MAX_FILE || handle < 0)
 		return -1;
 
-	_opened_file_[handle].busy = 0;
-	return 0;
+	if(_opened_file_[handle].busy == 1){
+                _opened_file_[handle].busy = 0;
+                return 0;
+        } else {
+                return -1;
+        }
+
 }
 
 int read2(FILE2 handle, char *buffer, int size) {
@@ -212,6 +217,9 @@ int read2(FILE2 handle, char *buffer, int size) {
 		return -1;
 
 	//checks if handle is valid
+	if (handle<0 || handle >= MAX_FILE)
+                return -1;
+
 	if (_opened_file_[handle].busy != 1 || size < 0) {
 		return -1;
 	}
@@ -266,6 +274,10 @@ int write2(FILE2 handle, char *buffer, int size) {
 		return -1;
 
 	if (handle < 0 || handle >= MAX_FILE) {
+		return -1;
+	}
+
+        if(_opened_file_[handle].busy!=1 || size<0){
 		return -1;
 	}
 
@@ -376,11 +388,17 @@ int write2(FILE2 handle, char *buffer, int size) {
 int seek2(FILE2 handle, unsigned int offset) {
 	if (init() < 0)
 		return -1;
-	if (handle >= MAX_FILE || handle < 0)
+	if (handle >= MAX_FILE || handle < -1)
 		return -1;
+
+        if (_opened_file_[handle].busy!=1 || offset<-1) {
+		return -1;
+	}
+
 	if (offset == -1) {
-		_opened_file_[handle].curr_pointer =
-				_opened_file_[handle].record.bytesFileSize;
+		_opened_file_[handle].curr_pointer = 
+                        _opened_file_[handle].record.bytesFileSize;
+
 	} else if (offset >= 0) {
 		_opened_file_[handle].curr_pointer = offset;
 	} else {

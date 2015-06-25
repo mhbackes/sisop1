@@ -18,6 +18,9 @@ TST_DIR=./teste
 
 all: t2fs.a
 
+dir_size: $(TST_DIR)/dir_size.c t2fs.a
+	$(CC) -o $(BIN_DIR)/dir_size $(TST_DIR)/dir_size.c -L$(LIB_DIR) -lt2fs -Wall
+
 debug : t2fs.o t2fs_aux.o test.o
 	$(CC) -g -o $(BIN_DIR)/debug $(BIN_DIR)/test.o $(BIN_DIR)/t2fs_aux.o $(BIN_DIR)/t2fs.o $(LIB_DIR)/apidisk.o -Wall
 
