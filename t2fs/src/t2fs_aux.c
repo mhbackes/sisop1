@@ -3,6 +3,8 @@
 #include <string.h>
 
 int init() {
+	if (_initialized_)
+		return 0;
 	if (read_super_block() != 0)
 		return -1;
 	_inode_size_ = sizeof(struct t2fs_inode);
@@ -21,7 +23,7 @@ int read_super_block() {
 	char buff[SECTOR_SIZE];
 	if (read_sector(0, buff) != 0)
 	{  
-		printf("error while reading superblock\n");
+		//printf("error while reading superblock\n");
 		return -1;
 	}
 	memcpy(&_super_block_, buff, sizeof(_super_block_));
