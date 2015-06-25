@@ -143,8 +143,7 @@ int delete2(char *filename) {
 	//checks if file  exists
 	struct t2fs_record record;
 	int position=find_record(&record, parent_inode_addr, filename);
-	if(position!=-1){
-	  
+	if(position!=-1 && record.TypeVal == TYPEVAL_REGULAR){
 		deep_free_inode(record.i_node);
 		//remove registro
 		remove_record(parent_inode_addr,position);
