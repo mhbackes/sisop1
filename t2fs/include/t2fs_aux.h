@@ -39,24 +39,24 @@ int read_inode(struct t2fs_inode *inode_data, DWORD inode);
 int write_inode(struct t2fs_inode *inode_data, DWORD inode);
 
 // funções de blocos lógicos em geral
-DWORD create_single_ind_block(DWORD first_ptr); //write2 <- pode ser util para escrever no arquivo
-DWORD create_double_ind_block(DWORD first_ptr); //write2 <- pode ser util para escrever no arquivo
-int deep_free_single_ind(DWORD block); //delete2 <- pode ser util para deletar arquivo
-int deep_free_double_ind(DWORD block); //delete2 <- pode ser util para deletar arquivo
+DWORD create_single_ind_block(DWORD first_ptr); 
+DWORD create_double_ind_block(DWORD first_ptr); 
+int deep_free_single_ind(DWORD block); 
+int deep_free_double_ind(DWORD block); 
 
 
 // funções de inode em geral
 void inode_init(struct t2fs_inode *inode);
 DWORD alloc_inode();
 int free_inode(DWORD inode);
-int deep_free_inode(DWORD inode); //delete2 <- pode ser util para deletar arquivo
+int deep_free_inode(DWORD inode); 
 DWORD inode_size_bytes(DWORD inode);
 DWORD inode_dir_size_blocks(DWORD inode);
-void add_size_bytes(DWORD inode, DWORD bytes); // write2 <- usar quando o arquivo aumenta
-void add_size_blocks(DWORD inode, DWORD blocks); // write2 <- usar quando o arquivo aumenta
+void add_size_bytes(DWORD inode, DWORD bytes); 
+void add_size_blocks(DWORD inode, DWORD blocks);
 
 // funções de blocos de records
-DWORD create_record_block(struct t2fs_record *record); //write2 <- precisa de uma versão pra dados dessa função pra escrever no arquivo
+DWORD create_record_block(struct t2fs_record *record);
 
 
 // funções de inode de records (aka diretório)
