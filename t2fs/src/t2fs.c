@@ -113,7 +113,6 @@ FILE2 create2(char *filename) {
 int delete2(char *filename) {
 	if (init() < 0)
 		return -1;
-	//pega inode do diretorio atual
 	
 	DWORD parent_inode_addr = get_parent_inode(filename);
 	char* name = parse_file_name(filename);
@@ -144,10 +143,11 @@ FILE2 open2(char *filename) {
 	if (init() < 0)
 		return -1;
 
-	DWORD curr_dir_inode_addr = find_dir_inode(0, _cwd_ + 1);
+	DWORD file_parent_inode = get_parent_inode(filename);
+	char* name = parse_file_name(filename);
 
 	struct t2fs_record rec;
-	int pos = find_record(&rec, _current_dir_inode_, filename);
+	int pos = find_record(&rec, file_parent_inode, name);
 	if (pos == -1) {
 		//printf("file doesn't exists");
 		return -1;	// file doesn't exists		
@@ -169,7 +169,7 @@ FILE2 open2(char *filename) {
 	_opened_file_[handle].busy = 1;
 	_opened_file_[handle].inode = rec.i_node;
 	_opened_file_[handle].curr_pointer = 0;
-	_opened_file_[handle].parent_inode = _current_dir_inode_;
+	_opened_file_[handle].parent_inode = file_parent_inode;
 	_opened_file_[handle].record = rec;
 
 	//printf("the size of the file is: %d bytes \n",_opened_file_[handle].record.bytesFileSize );
