@@ -865,7 +865,7 @@ int dir_is_empty(DWORD inode) {
 
 DWORD get_parent_inode(char *str) {
 	DWORD first_inode_ptr;
-	char* file_name, path;
+	char* path;
 	if(str[0] == '/') {
 		path = str + 1;
 		first_inode_ptr = 0;	
@@ -876,11 +876,9 @@ DWORD get_parent_inode(char *str) {
 	int lo = last_occurrence(str, '/');
 	DWORD parent_inode_ptr;
 	if (lo == 0) {
-		file_name = path;
 		parent_inode_ptr = first_inode_ptr;
-	} else {
-		path[lo] = '\0';
-		file_name = path + lo + 1;
+	} else {		
+		*(path+lo) = '\0';
 		parent_inode_ptr = find_dir_inode(first_inode_ptr, path);
 	}
 	return parent_inode_ptr;
