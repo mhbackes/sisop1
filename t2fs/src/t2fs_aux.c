@@ -116,6 +116,27 @@ int record_offset(DWORD dirent) {
 	return dirent % _records_per_block_;
 }
 
+int read_record_single_ind(struct t2fs_record *record_data, DWORD block,
+		DWORD record_ptr, DWORD record_off) {
+	DWORD ptrs[_dwords_per_block_];
+	read_block((BYTE*) ptrs, block);
+	struct t2fs_record records[_records_per_block_];
+	read_block((BYTE*) records, ptrs[record_ptr]);
+	memcpy(record_data, &(records[record_off]), _record_size_);
+	return 0;
+}
+
+int read_record_double_ind(struct t2fs_record *record_data, DWORD block,
+		DWORD record_ptr, DWORD record_off) {
+	DWORD single_ind_ptr = record_ptr / _dwords_per_block_;
+	DWORD single_ind_off = record_ptr % _dwords_per_block_;
+	DWORD ptrs[_dwords_per_block_];
+	read_block((BYTE*) ptrs, block);
+	return read_record_single_ind(record_data, ptrs[single_ind_ptr],
+			single_ind_off, record_off);
+}
+
+
 int read_record(struct t2fs_record *record_data, DWORD inode, int position) {
 	int size = inode_size_bytes(inode) / _record_size_;
 	if (position >= size)
@@ -138,28 +159,30 @@ int read_record(struct t2fs_record *record_data, DWORD inode, int position) {
 	if (record_ptr
 			< (10 + _dwords_per_block_ + _dwords_per_block_ * _dwords_per_block_)) {
 		return read_record_double_ind(record_data, inode_data.doubleIndPtr,
-				record_ptr - 10 - _dwords_per_block_);
+                                              record_ptr - 10 - _dwords_per_block_, record_off);
 	}
 	return 0;
 }
 
-int read_record_single_ind(struct t2fs_record *record_data, DWORD block,
+
+int write_record_single_ind(struct t2fs_record *record_data, DWORD block,
 		DWORD record_ptr, DWORD record_off) {
 	DWORD ptrs[_dwords_per_block_];
 	read_block((BYTE*) ptrs, block);
 	struct t2fs_record records[_records_per_block_];
 	read_block((BYTE*) records, ptrs[record_ptr]);
-	memcpy(record_data, &(records[record_off]), _record_size_);
+	memcpy(&(records[record_off]), record_data, _record_size_);
+	write_block((BYTE*) records, ptrs[record_ptr]);
 	return 0;
 }
 
-int read_record_double_ind(struct t2fs_record *record_data, DWORD block,
+int write_record_double_ind(struct t2fs_record *record_data, DWORD block,
 		DWORD record_ptr, DWORD record_off) {
 	DWORD single_ind_ptr = record_ptr / _dwords_per_block_;
 	DWORD single_ind_off = record_ptr % _dwords_per_block_;
 	DWORD ptrs[_dwords_per_block_];
 	read_block((BYTE*) ptrs, block);
-	return read_record_single_ind(record_data, ptrs[single_ind_ptr],
+	return write_record_single_ind(record_data, ptrs[single_ind_ptr],
 			single_ind_off, record_off);
 }
 
@@ -184,31 +207,11 @@ int write_record(struct t2fs_record *record_data, DWORD inode, int position) {
 	if (record_ptr
 			< (10 + _dwords_per_block_ + _dwords_per_block_ * _dwords_per_block_)) {
 		return write_record_double_ind(record_data, inode_data.doubleIndPtr,
-				record_ptr - 10 - _dwords_per_block_);
+                                               record_ptr - 10 - _dwords_per_block_, record_off);
 	}
 	return -1;
 }
 
-int write_record_single_ind(struct t2fs_record *record_data, DWORD block,
-		DWORD record_ptr, DWORD record_off) {
-	DWORD ptrs[_dwords_per_block_];
-	read_block((BYTE*) ptrs, block);
-	struct t2fs_record records[_records_per_block_];
-	read_block((BYTE*) records, ptrs[record_ptr]);
-	memcpy(&(records[record_off]), record_data, _record_size_);
-	write_block((BYTE*) records, ptrs[record_ptr]);
-	return 0;
-}
-
-int write_record_double_ind(struct t2fs_record *record_data, DWORD block,
-		DWORD record_ptr, DWORD record_off) {
-	DWORD single_ind_ptr = record_ptr / _dwords_per_block_;
-	DWORD single_ind_off = record_ptr % _dwords_per_block_;
-	DWORD ptrs[_dwords_per_block_];
-	read_block((BYTE*) ptrs, block);
-	return write_record_single_ind(record_data, ptrs[single_ind_ptr],
-			single_ind_off, record_off);
-}
 
 //retorna a posição do record se achou, ou -1 se não achou
 int find_record(struct t2fs_record *record_data, DWORD inode, char *record_name) {

@@ -38,6 +38,19 @@ int identify2(char *name, int size) {
 	return 0;
 }
 
+//return an valid empty file handle. If none is free, returns -1
+FILE2 get_empty_file_handle() {
+	int ind = 0;
+	while (ind < MAX_FILE) {
+		if (_opened_file_[ind].busy == 0) {
+			return ind;
+		}
+		ind++;
+	}
+	return -1;
+}
+
+
 FILE2 create2(char *filename) {
 	if (init() < 0)
 		return -1;
@@ -119,17 +132,6 @@ FILE2 create2(char *filename) {
 	return handle;
 }
 
-//return an valid empty file handle. If none is free, returns -1
-FILE2 get_empty_file_handle() {
-	int ind = 0;
-	while (ind < MAX_FILE) {
-		if (_opened_file_[ind].busy == 0) {
-			return ind;
-		}
-		ind++;
-	}
-	return -1;
-}
 
 int delete2(char *filename) {
 	if (init() < 0)
@@ -164,6 +166,7 @@ int delete2(char *filename) {
 FILE2 open2(char *filename) {
 	if (init() < 0)
 		return -1;
+
 	DWORD curr_dir_inode_addr = find_dir_inode(0, _cwd_ + 1);
 
 	struct t2fs_record rec;
@@ -382,7 +385,10 @@ int write2(FILE2 handle, char *buffer, int size) {
 			_opened_file_[handle].record.name);
 	int result = write_record(&_opened_file_[handle].record, parent_inode,
 			record_position);
-
+        if(result < 0) {
+                return -1;
+        }
+        
 	return size;
 }
 int seek2(FILE2 handle, unsigned int offset) {
