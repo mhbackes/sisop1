@@ -97,6 +97,11 @@ int remove_dir(DWORD parent_inode, char *file_name);
 
 // util string
 int last_occurrence(char* str, int ch);
+// retorna o nome do arquivo num dado path (relativo ou absoluto)
+char* parse_file_name(char* str);
+// recebe str (nome de arquivo com diretórios), altera str e retorna o endereço do 
+// do inode do diretório pai
+DWORD get_parent_inode(char *str); 
 
 
 #endif /* T2FS_AUX_H_ */
