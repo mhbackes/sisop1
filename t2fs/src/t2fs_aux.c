@@ -867,16 +867,22 @@ int dir_is_empty(DWORD inode) {
 }
 
 DWORD get_parent_inode(char *str) {
+	int size = strlen(str);
+	if (size <= 0)
+		return NULL_BLOCK;
+	char aux[size+1];
+	strcpy(aux, str);
+	
 	DWORD first_inode_ptr;
 	char* path;
-	if(str[0] == '/') {
-		path = str + 1;
+	if(aux[0] == '/') {
+		path = aux + 1;
 		first_inode_ptr = 0;	
 	} else	{
-		path = str;	
+		path = aux;	
 		first_inode_ptr = _current_dir_inode_;
 	}
-	int lo = last_occurrence(str, '/');
+	int lo = last_occurrence(aux, '/');
 	DWORD parent_inode_ptr;
 	if (lo == 0) {
 		parent_inode_ptr = first_inode_ptr;
@@ -887,13 +893,13 @@ DWORD get_parent_inode(char *str) {
 	return parent_inode_ptr;
 }
 
-char* parse_file_name(char *str) {
+char* parse_file_name(char *aux) {
 	char* file_name;
-	char* lo = strrchr(str, '/');
+	char* lo = strrchr(aux, '/');
 	if (lo) {
 		file_name = lo + 1;
 	} else {
-		file_name = str;
+		file_name = aux;
 	}
 	return file_name;
 }
