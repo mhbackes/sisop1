@@ -57,5 +57,5 @@ int main(int argc, char* argv[]) {
 	} else {
 		puts("Could not close file.");
 	}
-
+	return 0;
 }

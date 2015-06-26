@@ -59,7 +59,6 @@ int main(int argc, char* argv[]) {
 	char buffer[BUFFER_SIZE];
 
 	puts("Copying file...");
-	int read_status;
 	while (fread(buffer, sizeof(char), BUFFER_SIZE, srcf) != 0) {
 		if (write2(dstf, buffer, BUFFER_SIZE) < 0) {
 			puts("Could not write bytes in file.");

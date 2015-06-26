@@ -8,23 +8,23 @@ TST_DIR=../teste
 
 all: cat2 cp2 ls2 mkdir2 rm2 rmdir2
 
-cat2: $(LIB_DIR)/libt2fs.a
+cat2: $(LIB_DIR)/libt2fs.a $(TST_DIR)/cat2.c
 	$(CC) -g -o cat2 $(TST_DIR)/cat2.c -L$(LIB_DIR) -lt2fs -Wall
 
-cp2: $(LIB_DIR)/libt2fs.a
+cp2: $(LIB_DIR)/libt2fs.a $(TST_DIR)/cp2.c
 	$(CC) -g -o cp2 $(TST_DIR)/cp2.c -L$(LIB_DIR) -lt2fs -Wall
 
-ls2: $(LIB_DIR)/libt2fs.a
+ls2: $(LIB_DIR)/libt2fs.a $(TST_DIR)/ls2.c
 	$(CC) -g -o ls2 $(TST_DIR)/ls2.c -L$(LIB_DIR) -lt2fs -Wall
 
-mkdir2: $(LIB_DIR)/libt2fs.a
+mkdir2: $(LIB_DIR)/libt2fs.a $(TST_DIR)/mkdir2.c
 	$(CC) -g -o mkdir2 $(TST_DIR)/mkdir2.c -L$(LIB_DIR) -lt2fs -Wall
 
-rm2: $(LIB_DIR)/libt2fs.a
+rm2: $(LIB_DIR)/libt2fs.a $(TST_DIR)/rm2.c
 	$(CC) -g -o rm2 $(TST_DIR)/rm2.c -L$(LIB_DIR) -lt2fs -Wall
 
-rmdir2: $(LIB_DIR)/libt2fs.a
+rmdir2: $(LIB_DIR)/libt2fs.a $(TST_DIR)/rmdir2.c
 	$(CC) -g -o rmdir2 $(TST_DIR)/rmdir2.c -L$(LIB_DIR) -lt2fs -Wall
 
 clean:
-	rm -rf cat2 cp2 ls2 mkdir2 rm2 rmdir2 *.~
+	rm -rf cat2 cp2 ls2 mkdir2 rm2 rmdir2 
