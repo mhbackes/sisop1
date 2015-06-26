@@ -152,6 +152,8 @@ FILE2 open2(char *filename) {
 		//printf("file doesn't exists");
 		return -1;	// file doesn't exists		
 	}
+	if (rec.TypeVal == TYPEVAL_DIRETORIO)
+		return -1;
 	int i = 0;
 	for (i = 0; i < MAX_FILE; i++)
 		if (_opened_file_[i].inode == rec.i_node)
