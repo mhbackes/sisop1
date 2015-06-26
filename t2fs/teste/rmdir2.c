@@ -37,4 +37,5 @@ int main (int argc, char* argv[]){
 	} else {
 		puts("Could not remove directory.");
 	}
+	return 0;
 }
